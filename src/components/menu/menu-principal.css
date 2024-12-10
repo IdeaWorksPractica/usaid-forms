@@ -1,22 +1,62 @@
-.container-menu-opt{
+.container-menu-opt {
     width: 100%;
     height: 15vh;
 }
-.render-opt-selectec{
+
+.render-opt-selectec {
     width: 100%;
     height: 72vh;
     padding-top: 1rem;
 }
-.menu-opciones-antd{
-    font-size: 1.2rem;
-    font-weight: bold;
-    display: flex;
-}
-.menu-opciones-antd>li{
+
+.menu-opciones-custom {
+    list-style: none;
     padding: 0;
-    width: 33%;
-    text-align: center;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap; /* Permite que las opciones se acomoden si es necesario */
+    justify-content: center; /* Centra las columnas horizontalmente */
+    align-items: center; /* Centra verticalmente si es necesario */
+    gap: 0; /* Espaciado entre columnas */
+    font-size: 1rem;
+    font-weight: bold;
+    width: 95%; /* Asegura que ocupe todo el ancho */
 }
-.ant-menu-submenu-selected{
-    color: #0068b1!important;
+
+.menu-opciones-custom > li {
+    width: 25%; /* Fuerza que cada opción ocupe el 25% */
+    text-align: center;
+    padding: 0.5rem 0;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    background-color: transparent;
+    position: relative;
+}
+
+.menu-opciones-custom > li:hover {
+    color: #0068b1; /* Color azul en hover */
+}
+
+.menu-opciones-custom > li:hover::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px; /* Línea debajo del texto */
+    background-color: #0068b1;
+}
+
+.menu-opciones-custom > li.selected {
+    color: #0068b1; /* Mismo color que el hover */
+}
+
+.menu-opciones-custom > li.selected::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px; /* Línea debajo del texto */
+    background-color: #0068b1;
 }

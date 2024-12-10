@@ -19,7 +19,7 @@ export interface IParticipante {
 }
 
 export interface IPerfil {
-  id:string
+  id: string;
   nombre_proyecto: string;
   tipo_proyecto: string[];
   lugar_implementacion: string;
@@ -39,7 +39,8 @@ export interface ICostoPSC {
 }
 
 export interface IInforme {
-  id:string
+  nombre_proyecto: string;
+  id: string;
   participantes: IParticipante[];
   lider_coordinador: string;
   tipo_proyecto: string[];
@@ -48,13 +49,28 @@ export interface IInforme {
     descripcion_beneficiarios: string;
   };
   descripcion_mejora: string;
-  fotografias : IFotografias
-  riesgo_medioambiental : string[]
-  medidas_reduccion_medioambiental : string[]
+  fotografias: IFotografias;
+  riesgo_medioambiental: string[];
+  medidas_reduccion_medioambiental: string[];
 }
 
 export interface IFotografias {
-    antes : string[];
-    durantes : string[];
-    despues : string[];
+  antes: string[];
+  durantes: string[];
+  despues: string[];
+}
+
+export interface IPresupuestos {
+  nombre_proyecto: string;
+  recursos: IRecurso[];
+  sub_total_creando_mi_futuro: number;
+  sub_total_contribuciones: number;
+  total: number;
+}
+
+export interface IRecurso {
+  descripcion_recurso: string;
+  cantidad: number;
+  cubierto_creando_mi_futuo: number;
+  constribucion_otros: number;
 }

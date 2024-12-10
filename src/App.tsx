@@ -5,6 +5,7 @@ import { Perfiles } from './components/perfiles/Perfiles';
 import { Planes } from './components/planes/Planes';
 import { Informes } from './components/informes/Informes';
 import { MenuRegistros } from "./components/menu/MenuRegistros";
+import {Presupuestos} from './components/presupuestos/Presupuestos';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="informes" element={<Informes />} />
             <Route path="perfiles" element={<Perfiles />} />
             <Route path="planes" element={<Planes />} />
+            <Route path="presupuestos" element={<Presupuestos />} />
           </Route>
         </Routes>
       </main>

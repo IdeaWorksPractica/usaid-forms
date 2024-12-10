@@ -24,15 +24,15 @@ body{
 /****ESTILOS PARA EL FAB*******/
 .fab-button {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 40px;
+  right: 30px;
   background-color: #0068b1;
   color: white;
   border: none;
   border-radius: 50%;
   width: 55px;
   height: 55px;
-  font-size: 2rem;
+  font-size: 1.5rem;
   display: flex; /* Habilita el modelo flexbox */
   align-items: center; /* Centra el contenido verticalmente */
   justify-content: center; /* Centra el contenido horizontalmente */
@@ -47,6 +47,7 @@ body{
 }
 
 .fab-content {
+  height: fit-content;
   display: inline-block; /* Asegura que se comporte como un contenido en línea */
   transform: none; /* Resetea cualquier transformación previa */
 }
