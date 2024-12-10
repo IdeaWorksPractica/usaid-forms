@@ -1,0 +1,22 @@
+.container-menu-opt{
+    width: 100%;
+    height: 15vh;
+}
+.render-opt-selectec{
+    width: 100%;
+    height: 72vh;
+    padding-top: 1rem;
+}
+.menu-opciones-antd{
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: flex;
+}
+.menu-opciones-antd>li{
+    padding: 0;
+    width: 33%;
+    text-align: center;
+}
+.ant-menu-submenu-selected{
+    color: #0068b1!important;
+}

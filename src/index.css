@@ -1,0 +1,54 @@
+body{
+  margin: 0!important;
+}
+
+
+
+/*****clases de utlidad global****/
+.bg-ligth-blue{
+  background-color: #a8c3e7;
+}
+
+.bg-medium-blue{
+  background-color: #0068b1;
+}
+
+.bg-usaid-red{
+  background-color: #c42531;
+}
+
+
+/****ESTILOS GLOBALES***/
+
+
+/****ESTILOS PARA EL FAB*******/
+.fab-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #0068b1;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 55px;
+  height: 55px;
+  font-size: 2rem;
+  display: flex; /* Habilita el modelo flexbox */
+  align-items: center; /* Centra el contenido verticalmente */
+  justify-content: center; /* Centra el contenido horizontalmente */
+  cursor: pointer;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.fab-button:hover {
+  transform: scale(1.1); /* Agranda el botón un 10% */
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.4); /* Aumenta la sombra */
+}
+
+.fab-content {
+  display: inline-block; /* Asegura que se comporte como un contenido en línea */
+  transform: none; /* Resetea cualquier transformación previa */
+}
+
+

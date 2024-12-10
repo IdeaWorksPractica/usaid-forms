@@ -1,0 +1,28 @@
+/******colors*****/
+
+/*usaid blue: #1e3468*/
+
+.usaid-navbar{
+    height: 9vh;
+    width: 100%;
+    position: fixed;
+    z-index: 999;
+    box-shadow: 0px 2px 10px 1px;
+}
+.color-bar-container{
+    height: 5%;
+    background-color: red;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+.section-container-logo{
+    display: flex;
+    justify-content: space-around;
+    background-color: #1e3468;
+    height: 95%;
+    width: 100%;
+}
+.logo-nav{
+    height: cover;
+    width: auto;
+}
