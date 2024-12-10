@@ -18,8 +18,9 @@ export const Planes: React.FC = () => {
     try {
       setLoading(true);
       const data = await getAllPlanActividades();
+      console.log('Planes: ', data)
       setPlanes(data);
-      setFilteredPlanes(data); // Inicializa la lista filtrada
+      setFilteredPlanes(data);
     } catch (error) {
       console.error("Error obteniendo los planes:", error);
     } finally {

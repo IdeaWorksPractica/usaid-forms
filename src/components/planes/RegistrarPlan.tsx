@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { Modal, Form, Input, Button, List, DatePicker, message, Popconfirm, Spin } from "antd";
+import { Modal, Form, Input, Button, List, DatePicker, message, Spin } from "antd";
 import { IPlanActividades, IActividad } from "../../shared/models/models";
 
 interface RegistrarPlanProps {
   isModalOpen: boolean;
   onClose: () => void;
-  onRegister: (plan: IPlanActividades) => Promise<void>; // Suponemos que `onRegister` es una operación asíncrona
+  onRegister: (plan: IPlanActividades) => Promise<void>;
 }
 
 export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
@@ -30,7 +30,7 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
       .then((values) => {
         const actividad: IActividad = {
           ...values,
-          fecha_desarrollar: values.fecha_desarrollar.toISOString(), // Convierte la fecha a ISO string
+          fecha_desarrollar: values.fecha_desarrollar.toISOString(),
         };
         setActivities([...activities, actividad]);
         activityForm.resetFields();
@@ -38,7 +38,16 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
       })
       .catch((error) => console.error("Error agregando actividad:", error));
   };
-  
+
+  const handleConfirmRegisterPlan = () => {
+    Modal.confirm({
+      title: "¿Está seguro de registrar el plan?",
+      content: "Una vez registrado, no podrá modificarlo.",
+      okText: "Sí",
+      cancelText: "No",
+      onOk: handleRegisterPlan,
+    });
+  };
 
   const handleRegisterPlan = async () => {
     try {
@@ -49,12 +58,11 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
         return;
       }
 
-      setIsLoading(true); // Activa el spinner en el botón
+      setIsLoading(true);
       const plan: IPlanActividades = { ...planData, actividades: activities };
-      console.log("Plan registrado exitosamente:", plan);
+      //console.log("Plan registrado exitosamente:", plan);
 
-      await onRegister(plan); // Llama al prop `onRegister`
-      message.success("Plan registrado exitosamente.");
+      await onRegister(plan);
 
       // Resetea los formularios y estados
       setPlanData({ nombre_proyecto: "", objetivo_proyecto: "", total_horas: 0 });
@@ -65,7 +73,7 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
       console.error("Error registrando el plan:", error);
       message.error("Ocurrió un error al registrar el plan.");
     } finally {
-      setIsLoading(false); // Desactiva el spinner
+      setIsLoading(false);
     }
   };
 
@@ -108,22 +116,15 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
             >
               Cancelar
             </Button>,
-            <Popconfirm
-              key="confirm"
-              title="¿Está seguro de registrar el plan?"
-              onConfirm={handleRegisterPlan}
-              okText="Sí"
-              cancelText="No"
+            <Button
+              key="register"
+              type="primary"
+              style={{ backgroundColor: "#0068b1", color: "white", borderColor: "#0068b1" }}
+              onClick={handleConfirmRegisterPlan}
+              disabled={isLoading}
             >
-              <Button
-                key="register"
-                type="primary"
-                style={{ backgroundColor: "#0068b1", color: "white", borderColor: "#0068b1" }}
-                disabled={isLoading}
-              >
-                {isLoading ? <Spin /> : "Registrar Plan"}
-              </Button>
-            </Popconfirm>,
+              {isLoading ? <Spin /> : "Registrar Plan"}
+            </Button>,
           ]
         ) : null
       }
@@ -166,7 +167,7 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
       <h4>Actividades</h4>
       <List
         dataSource={activities}
-        renderItem={(activity, index) => (
+        renderItem={(activity) => (
           <List.Item>
             <strong>{activity.descripcion}</strong> - {activity.horas_dedicadas} horas
           </List.Item>
