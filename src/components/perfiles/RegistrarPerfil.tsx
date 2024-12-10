@@ -3,8 +3,6 @@ import { Modal, Form, Input, Button, List, Checkbox, message, Spin, InputNumber,
 import { IPerfil, IParticipante } from "../../shared/models/models";
 import moment from "moment";
 
-const { RangePicker } = DatePicker;
-
 interface RegistrarPerfilProps {
   isModalOpen: boolean;
   onClose: () => void;
@@ -42,15 +40,6 @@ export const RegistrarPerfil: React.FC<RegistrarPerfilProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [participanteForm] = Form.useForm();
   const [perfilForm] = Form.useForm();
-
-  const updateCostoTotal = () => {
-    const { valor_financiado, otros_aportes } = perfilData.costo_total_psc;
-    const costo_total = valor_financiado + otros_aportes;
-    setPerfilData((prevData) => ({
-      ...prevData,
-      costo_total_psc: { ...prevData.costo_total_psc, costo_total },
-    }));
-  };
 
   const handleAddParticipante = () => {
     participanteForm

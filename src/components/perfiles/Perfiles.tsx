@@ -18,6 +18,7 @@ export const Perfiles: React.FC = () => {
     try {
       setLoading(true);
       const data = await getAllPerfiles();
+      console.log("Perfiles", data);
       setPerfiles(data);
       setFilteredPerfiles(data);
     } catch (error) {
@@ -42,7 +43,9 @@ export const Perfiles: React.FC = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase();
     setSearchTerm(value);
-    setFilteredPerfiles(perfiles.filter((perfil) => perfil.nombre_proyecto.toLowerCase().includes(value)));
+    setFilteredPerfiles(
+      perfiles.filter((perfil) => perfil.nombre_proyecto.toLowerCase().includes(value))
+    );
   };
 
   const clearSearch = () => {
@@ -92,16 +95,18 @@ export const Perfiles: React.FC = () => {
               {filteredPerfiles.map((perfil, index) => (
                 <Panel header={perfil.nombre_proyecto} key={index}>
                   <p>
-                    <strong>Tipo de Proyecto:</strong> {perfil.tipo_proyecto.join(", ")}
+                    <strong>Tipo de Proyecto Social Comunitario:</strong> {perfil.tipo_proyecto.join(", ")}
                   </p>
                   <p>
                     <strong>Lugar de Implementación:</strong> {perfil.lugar_implementacion}
                   </p>
                   <p>
-                    <strong>Beneficiarios:</strong> {perfil.cant_beneficiarios}
+                    <strong>Cantidad de beneficiarios :</strong> {perfil.cant_beneficiarios}
                   </p>
                   <p>
-                    <strong>Fechas de Implementación:</strong> {perfil.fechas_implementacion.join(", ")}
+                    <strong>Fechas de Implementación:</strong> {perfil.fechas_implementacion.join(
+                      " - "
+                    )}
                   </p>
                   <p>
                     <strong>Descripción del Problema:</strong> {perfil.descripcion_problema}
@@ -115,12 +120,25 @@ export const Perfiles: React.FC = () => {
                   <ul>
                     {perfil.participantes.map((participante, i) => (
                       <li key={i}>
-                        {participante.nombre_completo} (DNI: {participante.no_dni}, Tel: {participante.no_telefono})
+                        <strong>{participante.nombre_completo}</strong> - DNI:{" "}
+                        {participante.no_dni}, Tel: {participante.no_telefono}
                       </li>
                     ))}
                   </ul>
                   <p>
                     <strong>Líder/Coordinador:</strong> {perfil.lider_coordinador}
+                  </p>
+                  <p>
+                    <strong>Costo Total del Proyecto:</strong>{" "}
+                    LPS {perfil.costo_total_psc.costo_total.toFixed(2)}
+                  </p>
+                  <p>
+                    <strong>Valor Financiado:</strong>{" "}
+                    LPS {perfil.costo_total_psc.valor_financiado.toFixed(2)}
+                  </p>
+                  <p>
+                    <strong>Otros Aportes:</strong>{" "}
+                    LPS {perfil.costo_total_psc.otros_aportes.toFixed(2)}
                   </p>
                 </Panel>
               ))}
