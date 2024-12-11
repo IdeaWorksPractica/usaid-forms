@@ -94,7 +94,7 @@ export const Planes: React.FC = () => {
                 <Panel header={plan.nombre_proyecto} key={index}>
                   <p>
                     <strong>Objetivo:</strong> {plan.objetivo_proyecto}
-                  </p>
+                  </p>a
                   <p>
                     <strong>Total de Horas:</strong> {plan.total_horas}
                   </p>

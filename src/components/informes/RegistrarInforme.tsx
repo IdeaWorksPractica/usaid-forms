@@ -62,6 +62,16 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
     return false;
   };
 
+  const handleConfirmRegister = () => {
+    Modal.confirm({
+      title: "¿Está seguro de registrar el informe?",
+      content: "Una vez registrado, no podrá modificarlo.",
+      okText: "Sí",
+      cancelText: "No",
+      onOk: handleRegisterInforme,
+    });
+  };
+
   const handleRegisterInforme = async () => {
     try {
       await informeForm.validateFields();
@@ -130,7 +140,7 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
           key="register"
           type="primary"
           style={{ backgroundColor: "#0068b1", color: "white" }}
-          onClick={handleRegisterInforme}
+          onClick={handleConfirmRegister}
           disabled={isLoading}
         >
           {isLoading ? <Spin /> : "Registrar Informe"}
@@ -141,7 +151,7 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
       <Form form={informeForm} layout="vertical">
         <Form.Item
           name="nombre_proyecto"
-          label="Nombre del Proyecto"
+          label="Nombre del Proyecto Social Comunitario"
           rules={[{ required: true, message: "Ingrese el nombre del proyecto." }]}
         >
           <Input
@@ -151,7 +161,7 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
         </Form.Item>
         <Form.Item
           name="tipo_proyecto"
-          label="Tipo de Proyecto"
+          label="Tipo de Proyecto Social Comunitario"
           rules={[{ required: true, message: "Seleccione al menos un tipo de proyecto." }]}
         >
           <Checkbox.Group
@@ -162,7 +172,7 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
         </Form.Item>
         <Form.Item
           name="lider_coordinador"
-          label="Líder / Coordinador"
+          label="Líder / Coordinador/a del equipo"
           rules={[{ required: true, message: "Ingrese el nombre del líder o coordinador." }]}
         >
           <Input
@@ -172,7 +182,7 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
         </Form.Item>
         <Form.Item
           name="descripcion_beneficiarios"
-          label="Descripción de Beneficiarios"
+          label="Descripción de los beneficiarios"
           rules={[{ required: true, message: "Ingrese la descripción de los beneficiarios." }]}
         >
           <Input.TextArea
@@ -190,7 +200,7 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
         </Form.Item>
         <Form.Item
           name="cant_beneficiarios"
-          label="Cantidad de Beneficiarios"
+          label="Cantidad de beneficiarios/as"
           rules={[{ required: true, message: "Ingrese la cantidad de beneficiarios." }]}
         >
           <Input
@@ -209,7 +219,7 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
         </Form.Item>
         <Form.Item
           name="descripcion_mejora"
-          label="Descripción de la Mejora"
+          label="Describa como se mejoró la problemática abordada con la implementación del Proyecto Social Comunitario"
           rules={[{ required: true, message: "Ingrese la descripción de la mejora." }]}
         >
           <Input.TextArea
@@ -219,7 +229,7 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
         </Form.Item>
         <Form.Item
           name="riesgo_medioambiental"
-          label="Riesgos Medioambientales"
+          label="Describa las actividades implementadas en el Proyecto Social Comunitario que pueden generar algún riesgo medioambiental"
           rules={[{ required: true, message: "Ingrese los riesgos medioambientales." }]}
         >
           <Input.TextArea
@@ -231,7 +241,7 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
         </Form.Item>
         <Form.Item
           name="medidas_reduccion_medioambiental"
-          label="Medidas de Reducción Medioambiental"
+          label="Describa las medidas implementadas para reducir el riesgo e impacto medioambiental en esta actividad"
           rules={[{ required: true, message: "Ingrese las medidas de reducción medioambiental." }]}
         >
           <Input.TextArea

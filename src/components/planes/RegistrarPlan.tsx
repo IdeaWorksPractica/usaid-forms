@@ -118,7 +118,6 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
             </Button>,
             <Button
               key="register"
-              type="primary"
               style={{ backgroundColor: "#0068b1", color: "white", borderColor: "#0068b1" }}
               onClick={handleConfirmRegisterPlan}
               disabled={isLoading}
