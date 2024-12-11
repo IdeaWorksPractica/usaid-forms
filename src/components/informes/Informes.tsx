@@ -92,7 +92,7 @@ export const Informes: React.FC = () => {
             <Collapse accordion>
               {filteredInformes.map((informe) => (
                 <Panel
-                  header={`${informe.nombre_proyecto} - Informe de ${informe.lider_coordinador}`}
+                  header={`${informe.nombre_proyecto}`}
                   key={informe.id}
                 >
                   <p>
