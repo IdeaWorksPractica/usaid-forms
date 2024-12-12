@@ -1,8 +1,7 @@
-import React, { useState } from "react";
-import { Modal, Form, Input, Button, Checkbox, message, Spin, Upload, List } from "antd";
+import { useEffect, useState } from "react";
+import { Modal, Form, Input, Button, Checkbox, message, Upload, List, Spin } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { IInforme, IParticipante } from "../../shared/models/models";
-import { createInforme } from "../../shared/services/informes.service";
 
 const tiposProyectoOptions = [
   "Educación",
@@ -14,9 +13,34 @@ const tiposProyectoOptions = [
   "Otro",
 ];
 
-export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => void; }> = ({
+interface RegistrarInformeProps {
+  isModalOpen: boolean;
+  onClose: () => void;
+  onRegister: (
+    data: Omit<IInforme, "id">,
+    images?: {
+      antes?: File[];
+      durante?: File[];
+      despues?: File[];
+    }
+  ) => Promise<void>;
+  onUpdate: (
+    data: IInforme,
+    images?: {
+      antes?: File[];
+      durante?: File[];
+      despues?: File[];
+    }
+  ) => Promise<void>;
+  informe?: IInforme | null;
+}
+
+export const RegistrarInforme: React.FC<RegistrarInformeProps> = ({
   isModalOpen,
   onClose,
+  onRegister,
+  onUpdate,
+  informe,
 }) => {
   const [informeData, setInformeData] = useState<Omit<IInforme, "id" | "participantes" | "fotografias" | "tipo_proyecto">>({
     nombre_proyecto: "",
@@ -28,16 +52,79 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
   });
   const [tipoProyecto, setTipoProyecto] = useState<string[]>([]);
   const [participantes, setParticipantes] = useState<IParticipante[]>([]);
-  const [isAddingParticipante, setIsAddingParticipante] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [images, setImages] = useState<{ antes: File[]; durante: File[]; despues: File[] }>({
+  const [images, setImages] = useState<{
+    antes: File[];
+    durante: File[];
+    despues: File[];
+  }>({
     antes: [],
     durante: [],
     despues: [],
   });
+  const [imagesLocked, setImagesLocked] = useState<{
+    antes: boolean;
+    durante: boolean;
+    despues: boolean;
+  }>({
+    antes: false,
+    durante: false,
+    despues: false,
+  });
+  const [isAddingParticipante, setIsAddingParticipante] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [participanteForm] = Form.useForm();
   const [informeForm] = Form.useForm();
+  const [participanteForm] = Form.useForm();
+
+  useEffect(() => {
+    if (informe) {
+      console.log("Informe seleccionado: ", informe);
+      setInformeData({
+        nombre_proyecto: informe.nombre_proyecto,
+        lider_coordinador: informe.lider_coordinador,
+        descripcion_beneficiarios: informe.descripcion_beneficiarios,
+        descripcion_mejora: informe.descripcion_mejora,
+        riesgo_medioambiental: informe.riesgo_medioambiental,
+        medidas_reduccion_medioambiental: informe.medidas_reduccion_medioambiental,
+      });
+      setParticipantes(informe.participantes);
+      setTipoProyecto(informe.tipo_proyecto);
+  
+      // Bloquear imágenes ya subidas
+      setImagesLocked({
+        antes: informe.fotografias.antes.length > 0,
+        durante: informe.fotografias.durantes.length > 0,
+        despues: informe.fotografias.despues.length > 0,
+      });
+  
+      informeForm.setFieldsValue({
+        nombre_proyecto: informe.nombre_proyecto,
+        lider_coordinador: informe.lider_coordinador,
+        tipo_proyecto: informe.tipo_proyecto,
+        descripcion_mejora: informe.descripcion_mejora,
+        riesgo_medioambiental: informe.riesgo_medioambiental.join(", "),
+        medidas_reduccion_medioambiental: informe.medidas_reduccion_medioambiental.join(", "),
+        descripcion_beneficiarios: informe.descripcion_beneficiarios.descripcion_beneficiarios,
+        cant_beneficiarios: informe.descripcion_beneficiarios.cant_beneficiarios,
+      });
+    }
+  }, [informe, informeForm]);
+  
+
+  const handleUpload = (category: "antes" | "durante" | "despues", file: File) => {
+    if (imagesLocked[category]) {
+      message.warning(`Las imágenes de "${category}" ya han sido subidas y no se pueden modificar.`);
+      return false;
+    }
+    setImages((prev) => {
+      if (prev[category].length >= 2) {
+        message.error(`Solo se permiten 2 imágenes para la categoría "${category}".`);
+        return prev;
+      }
+      return { ...prev, [category]: [...prev[category], file] };
+    });
+    return false;
+  };
 
   const handleAddParticipante = () => {
     participanteForm
@@ -51,99 +138,111 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
       .catch((error) => console.error("Error agregando participante:", error));
   };
 
-  const handleUpload = (category: "antes" | "durante" | "despues", file: File) => {
-    setImages((prev) => {
-      if (prev[category].length >= 2) {
-        message.error(`Solo se permiten 2 imágenes para la categoría "${category}".`);
-        return prev;
-      }
-      return { ...prev, [category]: [...prev[category], file] };
-    });
-    return false;
+  const handleRemoveParticipante = (index: number) => {
+    setParticipantes((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleConfirmRegister = () => {
-    Modal.confirm({
-      title: "¿Está seguro de registrar el informe?",
-      content: "Una vez registrado, no podrá modificarlo.",
-      okText: "Sí",
-      cancelText: "No",
-      onOk: handleRegisterInforme,
-    });
+  const handleConfirmSubmit = () => {
+    if (informe) {
+      handleUpdate();
+    } else {
+      handleRegister();
+    }
   };
 
-  const handleRegisterInforme = async () => {
+  const handleRegister = async () => {
     try {
       await informeForm.validateFields();
+      setIsLoading(true);
+  
+      // Preparar la estructura de fotografias
+      const fotografias = {
+        antes: images.antes.map(() => ""),
+        durantes: images.durante.map(() => ""),
+        despues: images.despues.map(() => ""),
+      };
+  
+      // Crear el informe con fotografias
+      await onRegister(
+        { ...informeData, tipo_proyecto: tipoProyecto, participantes, fotografias },
+        images
+      );
+  
+      resetForm();
+      message.success("Informe registrado exitosamente.");
+    } catch (error) {
+      message.error("Error al registrar el informe. " + error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
 
-      if (participantes.length === 0) {
-        message.error("Debe agregar al menos un participante para registrar el informe.");
-        return;
-      }
-
-      if (tipoProyecto.length === 0) {
-        message.error("Debe seleccionar al menos un tipo de proyecto.");
-        return;
-      }
-
-      if (
-        images.antes.length !== 2 ||
-        images.durante.length !== 2 ||
-        images.despues.length !== 2
-      ) {
-        message.error("Debe subir exactamente 2 imágenes para cada categoría (antes, durante, después).");
-        return;
-      }
-
+  const handleUpdate = async () => {
+    try {
+      await informeForm.validateFields();
       setIsLoading(true);
 
-      await createInforme({
-        ...informeData,
-        tipo_proyecto: tipoProyecto,
-        participantes,
-      }, [...images.antes, ...images.durante, ...images.despues]);
+      // Subir imágenes solo para categorías desbloqueadas
+      const updatedImages = {
+        antes: !imagesLocked.antes ? images.antes : undefined,
+        durante: !imagesLocked.durante ? images.durante : undefined,
+        despues: !imagesLocked.despues ? images.despues : undefined,
+      };
 
-      message.success("Informe registrado exitosamente.");
+      // Actualizar el informe con las nuevas imágenes o datos
+      await onUpdate(
+        { ...informe!, tipo_proyecto: tipoProyecto, participantes },
+        updatedImages
+      );
 
-      // Resetear estados
-      setInformeData({
-        nombre_proyecto: "",
-        lider_coordinador: "",
-        descripcion_beneficiarios: { cant_beneficiarios: 0, descripcion_beneficiarios: "" },
-        descripcion_mejora: "",
-        riesgo_medioambiental: [],
-        medidas_reduccion_medioambiental: [],
-      });
-      setParticipantes([]);
-      setTipoProyecto([]);
-      setImages({ antes: [], durante: [], despues: [] });
-      informeForm.resetFields();
-      onClose();
+      resetForm();
+      message.success("Informe actualizado exitosamente.");
     } catch (error) {
-      console.error("Error registrando el informe:", error);
-      message.error("Ocurrió un error al registrar el informe.");
+      message.error("Error al actualizar el informe. " + error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const resetForm = () => {
+    setInformeData({
+      nombre_proyecto: "",
+      lider_coordinador: "",
+      descripcion_beneficiarios: { cant_beneficiarios: 0, descripcion_beneficiarios: "" },
+      descripcion_mejora: "",
+      riesgo_medioambiental: [],
+      medidas_reduccion_medioambiental: [],
+    });
+    setParticipantes([]);
+    setTipoProyecto([]);
+    setImages({ antes: [], durante: [], despues: [] });
+    setImagesLocked({ antes: false, durante: false, despues: false });
+    informeForm.resetFields();
+    onClose();
+  };
+
   return (
     <Modal
-      title="Registrar Informe"
+      title={informe ? "Actualizar Informe" : "Registrar Informe"}
       open={isModalOpen}
       onCancel={onClose}
       footer={[
-        <Button key="cancel" onClick={onClose} style={{ backgroundColor: "#c42531", color: "white" }}>
+        <Button
+          key="cancel"
+          onClick={onClose}
+          style={{ backgroundColor: "#c42531", color: "white" }}
+        >
           Cancelar
         </Button>,
         <Button
-          key="register"
+          key="submit"
           type="primary"
           style={{ backgroundColor: "#0068b1", color: "white" }}
-          onClick={handleConfirmRegister}
+          onClick={handleConfirmSubmit}
           disabled={isLoading}
         >
-          {isLoading ? <Spin /> : "Registrar Informe"}
+          {isLoading ? <Spin /> : informe ? "Actualizar Informe" : "Registrar Informe"}
         </Button>,
       ]}
       maskClosable={false}
@@ -156,7 +255,9 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
         >
           <Input
             value={informeData.nombre_proyecto}
-            onChange={(e) => setInformeData({ ...informeData, nombre_proyecto: e.target.value })}
+            onChange={(e) =>
+              setInformeData({ ...informeData, nombre_proyecto: e.target.value })
+            }
           />
         </Form.Item>
         <Form.Item
@@ -177,7 +278,9 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
         >
           <Input
             value={informeData.lider_coordinador}
-            onChange={(e) => setInformeData({ ...informeData, lider_coordinador: e.target.value })}
+            onChange={(e) =>
+              setInformeData({ ...informeData, lider_coordinador: e.target.value })
+            }
           />
         </Form.Item>
         <Form.Item
@@ -219,30 +322,35 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
         </Form.Item>
         <Form.Item
           name="descripcion_mejora"
-          label="Describa como se mejoró la problemática abordada con la implementación del Proyecto Social Comunitario"
+          label="Describa cómo se mejoró la problemática abordada con la implementación del Proyecto Social Comunitario"
           rules={[{ required: true, message: "Ingrese la descripción de la mejora." }]}
         >
           <Input.TextArea
             value={informeData.descripcion_mejora}
-            onChange={(e) => setInformeData({ ...informeData, descripcion_mejora: e.target.value })}
+            onChange={(e) =>
+              setInformeData({ ...informeData, descripcion_mejora: e.target.value })
+            }
           />
         </Form.Item>
         <Form.Item
           name="riesgo_medioambiental"
-          label="Describa las actividades implementadas en el Proyecto Social Comunitario que pueden generar algún riesgo medioambiental"
+          label="Describa los riesgos medioambientales"
           rules={[{ required: true, message: "Ingrese los riesgos medioambientales." }]}
         >
           <Input.TextArea
             value={informeData.riesgo_medioambiental.join(", ")}
             onChange={(e) =>
-              setInformeData({ ...informeData, riesgo_medioambiental: e.target.value.split(",") })
+              setInformeData({
+                ...informeData,
+                riesgo_medioambiental: e.target.value.split(","),
+              })
             }
           />
         </Form.Item>
         <Form.Item
           name="medidas_reduccion_medioambiental"
-          label="Describa las medidas implementadas para reducir el riesgo e impacto medioambiental en esta actividad"
-          rules={[{ required: true, message: "Ingrese las medidas de reducción medioambiental." }]}
+          label="Describa las medidas de reducción de impacto medioambiental"
+          rules={[{ required: true, message: "Ingrese las medidas de reducción." }]}
         >
           <Input.TextArea
             value={informeData.medidas_reduccion_medioambiental.join(", ")}
@@ -254,41 +362,40 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
             }
           />
         </Form.Item>
-        <Form.Item label="Imágenes Antes (2)" required>
-          <Upload
-            beforeUpload={(file) => handleUpload("antes", file)}
-            fileList={images.antes.map((file) => ({ uid: file.name, name: file.name, status: "done" }))}
-            listType="picture"
-            maxCount={2}
-          >
-            <Button icon={<UploadOutlined />}>Seleccionar Imágenes</Button>
-          </Upload>
-        </Form.Item>
-        <Form.Item label="Imágenes Durante (2)" required>
-          <Upload
-            beforeUpload={(file) => handleUpload("durante", file)}
-            fileList={images.durante.map((file) => ({ uid: file.name, name: file.name, status: "done" }))}
-            listType="picture"
-            maxCount={2}
-          >
-            <Button icon={<UploadOutlined />}>Seleccionar Imágenes</Button>
-          </Upload>
-        </Form.Item>
-        <Form.Item label="Imágenes Después (2)" required>
-          <Upload
-            beforeUpload={(file) => handleUpload("despues", file)}
-            fileList={images.despues.map((file) => ({ uid: file.name, name: file.name, status: "done" }))}
-            listType="picture"
-            maxCount={2}
-          >
-            <Button icon={<UploadOutlined />}>Seleccionar Imágenes</Button>
-          </Upload>
-        </Form.Item>
+        {["antes", "durante", "despues"].map((category) => (
+          <Form.Item key={category} label={`Imágenes ${category} (2)`}>
+            <Upload
+              beforeUpload={(file) => handleUpload(category as "antes" | "durante" | "despues", file)}
+              fileList={images[category as keyof typeof images].map((file) => ({
+                uid: file.name,
+                name: file.name,
+                status: "done",
+              }))}
+              listType="picture"
+              disabled={imagesLocked[category as keyof typeof imagesLocked]}
+            >
+              <Button
+                icon={<UploadOutlined />}
+                disabled={imagesLocked[category as keyof typeof imagesLocked]}
+              >
+                {imagesLocked[category as keyof typeof imagesLocked]
+                  ? "Imágenes subidas"
+                  : "Seleccionar Imágenes"}
+              </Button>
+            </Upload>
+          </Form.Item>
+        ))}
         <h4>Participantes</h4>
         <List
           dataSource={participantes}
-          renderItem={(participante) => (
-            <List.Item>
+          renderItem={(participante, index) => (
+            <List.Item
+              actions={[
+                <Button danger type="text" onClick={() => handleRemoveParticipante(index)}>
+                  Eliminar
+                </Button>,
+              ]}
+            >
               <strong>{participante.nombre_completo}</strong> - DNI: {participante.no_dni}, Tel:{" "}
               {participante.no_telefono}
             </List.Item>
@@ -299,7 +406,12 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
             <Button
               type="dashed"
               onClick={() => setIsAddingParticipante(true)}
-              style={{ marginTop: "16px", backgroundColor: "#0068b1", color: "white", borderColor: "#0068b1" }}
+              style={{
+                marginTop: "16px",
+                backgroundColor: "#0068b1",
+                color: "white",
+                borderColor: "#0068b1",
+              }}
             >
               Agregar Participante
             </Button>
@@ -329,12 +441,21 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
             </Form.Item>
             <Button
               onClick={handleAddParticipante}
-              style={{ marginRight: "8px", backgroundColor: "#0068b1", color: "white", borderColor: "#0068b1" }}
+              style={{
+                marginRight: "8px",
+                backgroundColor: "#0068b1",
+                color: "white",
+                borderColor: "#0068b1",
+              }}
             >
               Agregar
             </Button>
             <Button
-              style={{ backgroundColor: "#c42531", color: "white", borderColor: "#c42531" }}
+              style={{
+                backgroundColor: "#c42531",
+                color: "white",
+                borderColor: "#c42531",
+              }}
               onClick={() => setIsAddingParticipante(false)}
             >
               Cancelar
@@ -344,6 +465,5 @@ export const RegistrarInforme: React.FC<{ isModalOpen: boolean; onClose: () => v
       </Form>
     </Modal>
   );
-  
-  
-};
+
+}

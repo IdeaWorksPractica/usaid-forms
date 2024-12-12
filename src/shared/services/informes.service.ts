@@ -8,57 +8,78 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { IInforme } from "../models/models";
-import { uploadImages } from "./fotografias.service"; // Asume que este servicio ya incluye la lógica de compresión
+import { uploadImagesByCategory } from "./fotografias.service";
 import { db } from "../../../firebase";
 
 const collectionName = "informes"; // Nombre de la colección en Firestore
 
 /**
- * Crea un nuevo informe en Firestore y sube imágenes relacionadas.
+ * Crea un informe con manejo opcional de imágenes.
  *
- * @param informe - Datos básicos del informe (sin fotografías).
- * @param files - Archivos de imágenes (6 imágenes).
- * @returns Promise<string> - El ID del documento creado.
+ * @param informe - Datos básicos del informe.
+ * @param filesByCategory - Map de archivos por categoría (opcional).
+ * @returns Promise<string> - ID del informe creado.
  */
 export async function createInforme(
   informe: Omit<IInforme, "id" | "fotografias">,
-  files: File[]
+  filesByCategory?: { antes?: File[]; durante?: File[]; despues?: File[] }
 ): Promise<string> {
   try {
-    if (files.length !== 6) {
-      throw new Error("Debes proporcionar exactamente 6 imágenes.");
-    }
+    const fotografias = await uploadImagesByCategory(filesByCategory || {});
 
-    // Subir imágenes y obtener sus URLs
-    const imageUrls = await uploadImages(files, "informes/");
-
-    if (imageUrls.length !== 6) {
-      throw new Error("La subida de imágenes falló. No se obtuvieron 6 URLs.");
-    }
-
-    // Organizar las URLs en el formato requerido
-    const fotografias = {
-      antes: [imageUrls[0], imageUrls[1]],
-      durantes: [imageUrls[2], imageUrls[3]],
-      despues: [imageUrls[4], imageUrls[5]],
-    };
-
-    // Crear el informe con las fotografías
     const informeCompleto: Omit<IInforme, "id"> = {
       ...informe,
-      fotografias,
+      fotografias: {
+        antes: fotografias.antes || [],
+        durantes: fotografias.durante || [],
+        despues: fotografias.despues || [],
+      },
     };
 
-    // Guardar el informe en Firestore
-    const docRef = await addDoc(
-      collection(db, collectionName),
-      informeCompleto
-    );
+    const docRef = await addDoc(collection(db, collectionName), informeCompleto);
     console.log("Informe creado con éxito:", docRef.id);
-
     return docRef.id;
   } catch (error) {
     console.error("Error creando el informe:", error);
+    throw error;
+  }
+}
+
+/**
+ * Actualiza un informe con manejo opcional de imágenes.
+ *
+ * @param id - ID del informe.
+ * @param updatedData - Datos actualizados.
+ * @param filesByCategory - Map de archivos por categoría (opcional).
+ * @returns Promise<void>
+ */
+export async function updateInforme(
+  id: string,
+  updatedData: Partial<Omit<IInforme, "id">>,
+  filesByCategory?: { antes?: File[]; durante?: File[]; despues?: File[] }
+): Promise<void> {
+  try {
+    const fotografias = filesByCategory
+      ? await uploadImagesByCategory(filesByCategory)
+      : {};
+
+    const existingData = await getInformeById(id);
+
+    if (!existingData) {
+      throw new Error("No se encontró el informe para actualizar.");
+    }
+
+    const updatedFotografias = {
+      antes: fotografias.antes || existingData.fotografias.antes,
+      durantes: fotografias.durante || existingData.fotografias.durantes,
+      despues: fotografias.despues || existingData.fotografias.despues,
+    };
+
+    const docRef = doc(db, collectionName, id);
+    await updateDoc(docRef, { ...updatedData, fotografias: updatedFotografias });
+    console.log("Informe actualizado con éxito");
+  } catch (error) {
+    console.error("Error actualizando el informe:", error);
     throw error;
   }
 }
@@ -68,20 +89,19 @@ export async function createInforme(
  * @returns Promise<IInforme[]> - Una lista de informes.
  */
 export async function getAllInformes(): Promise<IInforme[]> {
-    try {
-      const querySnapshot = await getDocs(collection(db, collectionName));
-      const informes: IInforme[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data() as Omit<IInforme, "id">;
-        informes.push({ id: doc.id, ...data }); 
-      });
-      return informes;
-    } catch (error) {
-      console.error("Error obteniendo los informes:", error);
-      throw error;
-    }
+  try {
+    const querySnapshot = await getDocs(collection(db, collectionName));
+    const informes: IInforme[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as Omit<IInforme, "id">;
+      informes.push({ id: doc.id, ...data });
+    });
+    return informes;
+  } catch (error) {
+    console.error("Error obteniendo los informes:", error);
+    throw error;
   }
-  
+}
 
 /**
  * Obtiene un documento de la colección "informes" por su ID.
@@ -101,26 +121,6 @@ export async function getInformeById(id: string): Promise<IInforme | null> {
     }
   } catch (error) {
     console.error("Error obteniendo el informe por ID:", error);
-    throw error;
-  }
-}
-
-/**
- * Actualiza un documento en la colección "informes".
- * @param id - ID del documento a actualizar.
- * @param updatedData - Datos a actualizar (parciales).
- * @returns Promise<void>
- */
-export async function updateInforme(
-  id: string,
-  updatedData: Partial<Omit<IInforme, "id">>
-): Promise<void> {
-  try {
-    const docRef = doc(db, collectionName, id);
-    await updateDoc(docRef, updatedData);
-    console.log("Informe actualizado con éxito");
-  } catch (error) {
-    console.error("Error actualizando el informe:", error);
     throw error;
   }
 }

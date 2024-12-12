@@ -13,12 +13,14 @@ export const Informes: React.FC = () => {
   const [filteredInformes, setFilteredInformes] = useState<IInforme[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedInforme, setSelectedInforme] = useState<IInforme | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const data = await getAllInformes();
+      console.log(data)
       setInformes(data);
       setFilteredInformes(data);
     } catch (error) {
@@ -53,6 +55,16 @@ export const Informes: React.FC = () => {
 
   const handleClosePreview = () => {
     setPreviewImage(null);
+  };
+
+  const handleOpenUpdateModal = (informe: IInforme) => {
+    setSelectedInforme(informe);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedInforme(null);
   };
 
   const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -91,10 +103,7 @@ export const Informes: React.FC = () => {
           {filteredInformes.length > 0 ? (
             <Collapse accordion>
               {filteredInformes.map((informe) => (
-                <Panel
-                  header={`${informe.nombre_proyecto}`}
-                  key={informe.id}
-                >
+                <Panel header={`${informe.nombre_proyecto}`} key={informe.id}>
                   <p>
                     <strong>Nombre del Proyecto:</strong> {informe.nombre_proyecto}
                   </p>
@@ -121,106 +130,49 @@ export const Informes: React.FC = () => {
                     {informe.medidas_reduccion_medioambiental.join(", ")}
                   </p>
                   <div className="row">
-  <div className="col-md-12">
-    <h5>Antes</h5>
-    <div className="d-flex flex-wrap">
-      {informe.fotografias.antes.map((url, i) => (
-        <div
-          key={i}
-          className="p-2 mb-2"
-          style={{
-            backgroundColor: "#f8f9fa",
-            border: "1px solid #ddd",
-            borderRadius: "5px",
-            width: "45%",
-            marginRight: "5%",
-            marginBottom: "10px",
-          }}
-        >
-          <img
-            src={url}
-            alt={`Antes ${i + 1}`}
-            className="img-fluid"
-            style={{
-              height: "60px",
-              width: "100%",
-              objectFit: "cover",
-              cursor: "pointer",
-            }}
-            onClick={() => handleImageClick(url)}
-          />
-        </div>
-      ))}
-    </div>
-  </div>
-
-  <div className="col-md-12">
-    <h5>Durante</h5>
-    <div className="d-flex flex-wrap">
-      {informe.fotografias.durantes.map((url, i) => (
-        <div
-          key={i}
-          className="p-2 mb-2"
-          style={{
-            backgroundColor: "#f8f9fa",
-            border: "1px solid #ddd",
-            borderRadius: "5px",
-            width: "45%",
-            marginRight: "5%",
-            marginBottom: "10px",
-          }}
-        >
-          <img
-            src={url}
-            alt={`Durante ${i + 1}`}
-            className="img-fluid"
-            style={{
-              height: "60px",
-              width: "100%",
-              objectFit: "cover",
-              cursor: "pointer",
-            }}
-            onClick={() => handleImageClick(url)}
-          />
-        </div>
-      ))}
-    </div>
-  </div>
-
-  <div className="col-md-12">
-    <h5>Después</h5>
-    <div className="d-flex flex-wrap">
-      {informe.fotografias.despues.map((url, i) => (
-        <div
-          key={i}
-          className="p-2 mb-2"
-          style={{
-            backgroundColor: "#f8f9fa",
-            border: "1px solid #ddd",
-            borderRadius: "5px",
-            width: "45%",
-            marginRight: "5%",
-            marginBottom: "10px",
-          }}
-        >
-          <img
-            src={url}
-            alt={`Después ${i + 1}`}
-            className="img-fluid"
-            style={{
-              height: "60px",
-              width: "100%",
-              objectFit: "cover",
-              cursor: "pointer",
-            }}
-            onClick={() => handleImageClick(url)}
-          />
-        </div>
-      ))}
-    </div>
-  </div>
-</div>
-
+                    <div className="col-md-12">
+                      <h5>Antes</h5>
+                      <div className="d-flex flex-wrap">
+                        {informe.fotografias.antes.map((url, i) => (
+                          <img
+                            key={i}
+                            src={url}
+                            alt={`Antes ${i + 1}`}
+                            style={{ cursor: "pointer", width: "45%", margin: "5px" }}
+                            onClick={() => handleImageClick(url)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="col-md-12">
+                      <h5>Durante</h5>
+                      <div className="d-flex flex-wrap">
+                        {informe.fotografias.durantes.map((url, i) => (
+                          <img
+                            key={i}
+                            src={url}
+                            alt={`Durante ${i + 1}`}
+                            style={{ cursor: "pointer", width: "45%", margin: "5px" }}
+                            onClick={() => handleImageClick(url)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="col-md-12">
+                      <h5>Después</h5>
+                      <div className="d-flex flex-wrap">
+                        {informe.fotografias.despues.map((url, i) => (
+                          <img
+                            key={i}
+                            src={url}
+                            alt={`Después ${i + 1}`}
+                            style={{ cursor: "pointer", width: "45%", margin: "5px" }}
+                            onClick={() => handleImageClick(url)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                   <p>
                     <strong>Participantes:</strong>
                   </p>
@@ -232,6 +184,13 @@ export const Informes: React.FC = () => {
                       </li>
                     ))}
                   </ul>
+                  <Button
+                    type="primary"
+                    onClick={() => handleOpenUpdateModal(informe)}
+                    style={{ marginTop: "10px" }}
+                  >
+                    Actualizar
+                  </Button>
                 </Panel>
               ))}
             </Collapse>
@@ -245,7 +204,10 @@ export const Informes: React.FC = () => {
       </button>
       <RegistrarInforme
         isModalOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleModalClose}
+        informe={selectedInforme}
+        onRegister={fetchData}
+        onUpdate={fetchData}
       />
       <Modal
         visible={!!previewImage}
