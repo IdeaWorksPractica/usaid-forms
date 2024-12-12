@@ -78,13 +78,11 @@ export async function getPerfilById(id: string): Promise<IPerfil | null> {
  * @param updatedData - Datos a actualizar (parciales).
  * @returns Promise<void>
  */
-export async function updatePerfil(
-  id: string,
-  updatedData: Partial<Omit<IPerfil, "id">>
-): Promise<void> {
+export async function updatePerfil(updatedData: Partial<IPerfil> & { id: string }): Promise<void> {
   try {
-    const docRef = doc(db, collectionName, id);
-    await updateDoc(docRef, updatedData);
+    const { id, ...fieldsToUpdate } = updatedData; // Extrae el ID y los campos a actualizar
+    const docRef = doc(db, collectionName, id); // Obtiene la referencia al documento
+    await updateDoc(docRef, fieldsToUpdate); // Actualiza los campos
     console.log("Perfil actualizado con éxito");
   } catch (error) {
     console.error("Error actualizando el perfil:", error);

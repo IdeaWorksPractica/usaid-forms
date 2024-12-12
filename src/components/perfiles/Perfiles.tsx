@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getAllPerfiles, createPerfil } from "../../shared/services/perfiles.service";
+import { getAllPerfiles, createPerfil, updatePerfil } from "../../shared/services/perfiles.service";
 import { IPerfil } from "../../shared/models/models";
 import { Spin, message, Input, Collapse, Button } from "antd";
 import { LoadingOutlined, CloseOutlined } from "@ant-design/icons";
@@ -13,12 +13,12 @@ export const Perfiles: React.FC = () => {
   const [filteredPerfiles, setFilteredPerfiles] = useState<IPerfil[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedPerfil, setSelectedPerfil] = useState<IPerfil | null>(null); // Estado para el perfil seleccionado
 
   const getData = async () => {
     try {
       setLoading(true);
       const data = await getAllPerfiles();
-      console.log("Perfiles", data);
       setPerfiles(data);
       setFilteredPerfiles(data);
     } catch (error) {
@@ -40,6 +40,19 @@ export const Perfiles: React.FC = () => {
     }
   };
 
+  const handleUpdatePerfil = async (perfil: IPerfil) => {
+    try {
+      await updatePerfil(perfil);
+      message.success("Perfil actualizado exitosamente.");
+      setIsModalOpen(false);
+      setSelectedPerfil(null);
+      getData();
+    } catch (error) {
+      console.error("Error actualizando el perfil:", error);
+      message.error("Ocurrió un error al actualizar el perfil.");
+    }
+  };
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase();
     setSearchTerm(value);
@@ -51,6 +64,11 @@ export const Perfiles: React.FC = () => {
   const clearSearch = () => {
     setSearchTerm("");
     setFilteredPerfiles(perfiles); // Restaura la lista completa
+  };
+
+  const openEditModal = (perfil: IPerfil) => {
+    setSelectedPerfil(perfil); // Selecciona el perfil a editar
+    setIsModalOpen(true); // Abre el modal
   };
 
   useEffect(() => {
@@ -95,24 +113,28 @@ export const Perfiles: React.FC = () => {
               {filteredPerfiles.map((perfil, index) => (
                 <Panel header={perfil.nombre_proyecto} key={index}>
                   <p>
-                    <strong>Tipo de Proyecto Social Comunitario:</strong> {perfil.tipo_proyecto.join(", ")}
+                    <strong>Tipo de Proyecto Social Comunitario:</strong>{" "}
+                    {perfil.tipo_proyecto.join(", ")}
                   </p>
                   <p>
-                    <strong>Lugar de Implementación:</strong> {perfil.lugar_implementacion}
+                    <strong>Lugar de Implementación:</strong>{" "}
+                    {perfil.lugar_implementacion}
                   </p>
                   <p>
-                    <strong>Cantidad de beneficiarios :</strong> {perfil.cant_beneficiarios}
+                    <strong>Cantidad de beneficiarios :</strong>{" "}
+                    {perfil.cant_beneficiarios}
                   </p>
                   <p>
-                    <strong>Fechas de Implementación:</strong> {perfil.fechas_implementacion.join(
-                      " - "
-                    )}
+                    <strong>Fechas de Implementación:</strong>{" "}
+                    {perfil.fechas_implementacion.join(" - ")}
                   </p>
                   <p>
-                    <strong>Descripción del Problema:</strong> {perfil.descripcion_problema}
+                    <strong>Descripción del Problema:</strong>{" "}
+                    {perfil.descripcion_problema}
                   </p>
                   <p>
-                    <strong>Descripción de las Acciones:</strong> {perfil.descripcion_acciones}
+                    <strong>Descripción de las Acciones:</strong>{" "}
+                    {perfil.descripcion_acciones}
                   </p>
                   <p>
                     <strong>Participantes:</strong>
@@ -126,7 +148,8 @@ export const Perfiles: React.FC = () => {
                     ))}
                   </ul>
                   <p>
-                    <strong>Líder/Coordinador:</strong> {perfil.lider_coordinador}
+                    <strong>Líder/Coordinador:</strong>{" "}
+                    {perfil.lider_coordinador}
                   </p>
                   <p>
                     <strong>Costo Total del Proyecto:</strong>{" "}
@@ -140,6 +163,18 @@ export const Perfiles: React.FC = () => {
                     <strong>Otros Aportes:</strong>{" "}
                     LPS {perfil.costo_total_psc.otros_aportes.toFixed(2)}
                   </p>
+                  <Button
+                    type="primary"
+                    onClick={() => openEditModal(perfil)}
+                    style={{
+                      marginTop: "10px",
+                      backgroundColor: "#0068b1",
+                      color: "white",
+                      borderColor: "#0068b1",
+                    }}
+                  >
+                    Editar
+                  </Button>
                 </Panel>
               ))}
             </Collapse>
@@ -153,8 +188,13 @@ export const Perfiles: React.FC = () => {
       </button>
       <RegistrarPerfil
         isModalOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedPerfil(null); // Limpia el perfil seleccionado
+        }}
         onRegister={handleRegisterPerfil}
+        onUpdate={handleUpdatePerfil}
+        perfil={selectedPerfil} // Pasa el perfil seleccionado
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, Form, Input, Button, List, Checkbox, message, Spin, InputNumber, DatePicker } from "antd";
 import { IPerfil, IParticipante } from "../../shared/models/models";
 import moment from "moment";
@@ -7,8 +7,9 @@ interface RegistrarPerfilProps {
   isModalOpen: boolean;
   onClose: () => void;
   onRegister: (perfil: Omit<IPerfil, "id">) => Promise<void>;
+  onUpdate: (perfil: IPerfil) => Promise<void>;
+  perfil?: IPerfil | null;
 }
-
 const tiposProyectoOptions = [
   "Educación",
   "Prevención de violencia",
@@ -19,10 +20,13 @@ const tiposProyectoOptions = [
   "Otro",
 ];
 
+
 export const RegistrarPerfil: React.FC<RegistrarPerfilProps> = ({
   isModalOpen,
   onClose,
   onRegister,
+  onUpdate,
+  perfil,
 }) => {
   const [perfilData, setPerfilData] = useState<Omit<IPerfil, "id" | "participantes" | "tipo_proyecto">>({
     nombre_proyecto: "",
@@ -41,44 +45,64 @@ export const RegistrarPerfil: React.FC<RegistrarPerfilProps> = ({
   const [participanteForm] = Form.useForm();
   const [perfilForm] = Form.useForm();
 
-  const handleAddParticipante = () => {
-    participanteForm
-      .validateFields()
-      .then((values) => {
-        const participante: IParticipante = { ...values };
-        setParticipantes([...participantes, participante]);
-        participanteForm.resetFields();
-        setIsAddingParticipante(false);
-      })
-      .catch((error) => console.error("Error agregando participante:", error));
-  };
+  // Rellenar el formulario si el perfil es proporcionado
+  useEffect(() => {
+    if (perfil) {
+      console.log("la data del perfil actualizado: ", perfil);
+  
+      // Convertir las fechas de implementación a objetos moment
+      const fechasImplementacion = perfil.fechas_implementacion.map((fecha) => moment(fecha));
+  
+      setPerfilData({
+        nombre_proyecto: perfil.nombre_proyecto,
+        lugar_implementacion: perfil.lugar_implementacion,
+        cant_beneficiarios: perfil.cant_beneficiarios,
+        fechas_implementacion: perfil.fechas_implementacion, // Mantener como string en el estado
+        costo_total_psc: perfil.costo_total_psc,
+        descripcion_problema: perfil.descripcion_problema,
+        descripcion_acciones: perfil.descripcion_acciones,
+        lider_coordinador: perfil.lider_coordinador,
+      });
+  
+      setParticipantes(perfil.participantes);
+      setTipoProyecto(perfil.tipo_proyecto);
+  
+      // Establecer los valores en el formulario
+      perfilForm.setFieldsValue({
+        ...perfil,
+        fecha_inicio: fechasImplementacion[0], // Primera fecha
+        fecha_fin: fechasImplementacion[1],   // Segunda fecha
+        "costo_total_psc.valor_financiado": perfil.costo_total_psc.valor_financiado,
+        "costo_total_psc.otros_aportes": perfil.costo_total_psc.otros_aportes,
+      });
+    }
+  }, [perfil, perfilForm]);
+  
+  
 
   const handleConfirmRegisterPerfil = () => {
     Modal.confirm({
-      title: "¿Está seguro de registrar el perfil?",
-      content: "Una vez registrado, no podrá modificarlo.",
+      title: perfil ? "¿Actualizar perfil?" : "¿Registrar perfil?",
+      content: perfil ? "¿Está seguro de actualizar este perfil?" : "¿Está seguro de registrar este perfil?",
       okText: "Sí",
       cancelText: "No",
-      onOk: handleRegisterPerfil,
+      onOk: perfil ? handleUpdatePerfil : handleRegisterPerfil,
     });
   };
 
   const handleRegisterPerfil = async () => {
     try {
       await perfilForm.validateFields();
-
       if (participantes.length === 0) {
         message.error("Debe agregar al menos un participante para registrar el perfil.");
         return;
       }
-
       if (tipoProyecto.length === 0) {
         message.error("Debe seleccionar al menos un tipo de proyecto.");
         return;
       }
-
       setIsLoading(true);
-      const perfil: Omit<IPerfil, "id"> = {
+      const newPerfil: Omit<IPerfil, "id"> = {
         ...perfilData,
         participantes,
         tipo_proyecto: tipoProyecto,
@@ -86,24 +110,8 @@ export const RegistrarPerfil: React.FC<RegistrarPerfilProps> = ({
           moment(date).format("YYYY-MM-DD")
         ),
       };
-
-      await onRegister(perfil);
-
-      // Resetea los formularios y estados
-      setPerfilData({
-        nombre_proyecto: "",
-        lugar_implementacion: "",
-        cant_beneficiarios: 0,
-        fechas_implementacion: [],
-        costo_total_psc: { valor_financiado: 0, otros_aportes: 0, costo_total: 0 },
-        descripcion_problema: "",
-        descripcion_acciones: "",
-        lider_coordinador: "",
-      });
-      setParticipantes([]);
-      setTipoProyecto([]);
-      perfilForm.resetFields();
-      onClose();
+      await onRegister(newPerfil);
+      resetForm();
     } catch (error) {
       console.error("Error registrando el perfil:", error);
       message.error("Ocurrió un error al registrar el perfil.");
@@ -111,6 +119,73 @@ export const RegistrarPerfil: React.FC<RegistrarPerfilProps> = ({
       setIsLoading(false);
     }
   };
+
+  const handleUpdatePerfil = async () => {
+    try {
+      await perfilForm.validateFields();
+      if (!perfil) return;
+      if (participantes.length === 0) {
+        message.error("Debe agregar al menos un participante para actualizar el perfil.");
+        return;
+      }
+      if (tipoProyecto.length === 0) {
+        message.error("Debe seleccionar al menos un tipo de proyecto.");
+        return;
+      }
+      setIsLoading(true);
+      const updatedPerfil: IPerfil = {
+        ...perfil,
+        ...perfilData,
+        participantes,
+        tipo_proyecto: tipoProyecto,
+        fechas_implementacion: perfilData.fechas_implementacion.map((date) =>
+          moment(date).format("YYYY-MM-DD")
+        ),
+      };
+      await onUpdate(updatedPerfil);
+      resetForm();
+    } catch (error) {
+      console.error("Error actualizando el perfil:", error);
+      message.error("Ocurrió un error al actualizar el perfil.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemoveParticipante = (index: number) => {
+    setParticipantes((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const resetForm = () => {
+    setPerfilData({
+      nombre_proyecto: "",
+      lugar_implementacion: "",
+      cant_beneficiarios: 0,
+      fechas_implementacion: [],
+      costo_total_psc: { valor_financiado: 0, otros_aportes: 0, costo_total: 0 },
+      descripcion_problema: "",
+      descripcion_acciones: "",
+      lider_coordinador: "",
+    });
+    setParticipantes([]);
+    setTipoProyecto([]);
+    perfilForm.resetFields();
+    participanteForm.resetFields();
+    onClose();
+  };
+  const handleAddParticipante = () => {
+    participanteForm
+      .validateFields()
+      .then((values) => {
+        const participante: IParticipante = { ...values };
+        setParticipantes((prev) => [...prev, participante]);
+        participanteForm.resetFields();
+        setIsAddingParticipante(false);
+      })
+      .catch((error) => {
+        console.error("Error al agregar participante:", error);
+      });
+  };  
 
   const handleCancel = () => {
     if (
@@ -124,23 +199,7 @@ export const RegistrarPerfil: React.FC<RegistrarPerfilProps> = ({
         content: "Hay datos sin guardar, ¿realmente desea cerrar? Se perderán todos los datos.",
         okText: "Sí, cerrar",
         cancelText: "Cancelar",
-        onOk: () => {
-          setPerfilData({
-            nombre_proyecto: "",
-            lugar_implementacion: "",
-            cant_beneficiarios: 0,
-            fechas_implementacion: [],
-            costo_total_psc: { valor_financiado: 0, otros_aportes: 0, costo_total: 0 },
-            descripcion_problema: "",
-            descripcion_acciones: "",
-            lider_coordinador: "",
-          });
-          setParticipantes([]);
-          setTipoProyecto([]);
-          perfilForm.resetFields();
-          participanteForm.resetFields();
-          onClose();
-        },
+        onOk: resetForm,
       });
     } else {
       onClose();
@@ -149,33 +208,32 @@ export const RegistrarPerfil: React.FC<RegistrarPerfilProps> = ({
 
   return (
     <Modal
-      title="Registrar Perfil"
-      open={isModalOpen}
-      onCancel={handleCancel}
-      footer={
-        !isAddingParticipante ? (
-          [
-            <Button
-              key="cancel"
-              onClick={handleCancel}
-              style={{ backgroundColor: "#c42531", color: "white", borderColor: "#c42531" }}
-            >
-              Cancelar
-            </Button>,
-            <Button
-              key="register"
-              type="primary"
-              style={{ backgroundColor: "#0068b1", color: "white", borderColor: "#0068b1" }}
-              onClick={handleConfirmRegisterPerfil}
-              disabled={isLoading}
-            >
-              {isLoading ? <Spin /> : "Registrar Perfil"}
-            </Button>,
-          ]
-        ) : null
-      }
-      maskClosable={false}
-    >
+    title={perfil ? "Actualizar Perfil" : "Registrar Perfil"}
+    open={isModalOpen}
+    onCancel={handleCancel}
+    footer={
+      !isAddingParticipante ? (
+        [
+          <Button
+            key="cancel"
+            onClick={handleCancel}
+            style={{ backgroundColor: "#c42531", color: "white", borderColor: "#c42531" }}
+          >
+            Cancelar
+          </Button>,
+          <Button
+            key="register"
+            type="primary"
+            style={{ backgroundColor: "#0068b1", color: "white", borderColor: "#0068b1" }}
+            onClick={handleConfirmRegisterPerfil}
+            disabled={isLoading}
+          >
+            {isLoading ? <Spin /> : perfil ? "Actualizar Perfil" : "Registrar Perfil"}
+          </Button>,
+        ]
+      ) : null // Oculta el footer cuando isAddingParticipante es true
+    }
+  >
       <Form form={perfilForm} layout="vertical">
         <Form.Item
           name="nombre_proyecto"
@@ -365,13 +423,24 @@ export const RegistrarPerfil: React.FC<RegistrarPerfilProps> = ({
 
       <h4>Participantes</h4>
       <List
-        dataSource={participantes}
-        renderItem={(participante) => (
-          <List.Item>
-            <strong>{participante.nombre_completo}</strong> - DNI: {participante.no_dni}, Tel: {participante.no_telefono}
-          </List.Item>
-        )}
-      />
+  dataSource={participantes}
+  renderItem={(participante, index) => (
+    <List.Item
+      actions={[
+        <Button
+          danger
+          type="text"
+          onClick={() => handleRemoveParticipante(index)}
+        >
+          Eliminar
+        </Button>,
+      ]}
+    >
+      <strong>{participante.nombre_completo}</strong> - DNI: {participante.no_dni}, Tel: {participante.no_telefono}
+    </List.Item>
+  )}
+/>
+
 
       {!isAddingParticipante ? (
         <div className="w-100 d-flex justify-content-center">
