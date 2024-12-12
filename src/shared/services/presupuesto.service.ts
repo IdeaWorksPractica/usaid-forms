@@ -68,6 +68,7 @@ export const updatePresupuesto = async (id: string, data: Partial<IPresupuestos>
   try {
     const docRef = doc(db, PRESUPUESTOS_COLLECTION, id);
     await updateDoc(docRef, data);
+    console.log("Presupuesto actualizado exitosamente.");
   } catch (error) {
     console.error("Error al actualizar el presupuesto:", error);
     throw error;

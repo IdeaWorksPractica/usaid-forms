@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, Form, Input, Button, List, DatePicker, message, Spin } from "antd";
 import { IPlanActividades, IActividad } from "../../shared/models/models";
 
@@ -6,12 +6,14 @@ interface RegistrarPlanProps {
   isModalOpen: boolean;
   onClose: () => void;
   onRegister: (plan: IPlanActividades) => Promise<void>;
+  plan?: IPlanActividades | null; // Nueva prop para recibir el plan a actualizar
 }
 
 export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
   isModalOpen,
   onClose,
   onRegister,
+  plan,
 }) => {
   const [planData, setPlanData] = useState<Omit<IPlanActividades, "actividades">>({
     nombre_proyecto: "",
@@ -23,6 +25,22 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [activityForm] = Form.useForm();
   const [planForm] = Form.useForm();
+
+  useEffect(() => {
+    if (plan) {
+      setPlanData({
+        nombre_proyecto: plan.nombre_proyecto,
+        objetivo_proyecto: plan.objetivo_proyecto,
+        total_horas: plan.total_horas,
+      });
+      setActivities(plan.actividades);
+      planForm.setFieldsValue({
+        nombre_proyecto: plan.nombre_proyecto,
+        objetivo_proyecto: plan.objetivo_proyecto,
+        total_horas: plan.total_horas,
+      });
+    }
+  }, [plan, planForm]);
 
   const handleAddActivity = () => {
     activityForm
@@ -41,8 +59,8 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
 
   const handleConfirmRegisterPlan = () => {
     Modal.confirm({
-      title: "¿Está seguro de registrar el plan?",
-      content: "Una vez registrado, no podrá modificarlo.",
+      title: plan ? "Actualizar Plan de Actividades" : "Registrar Plan de Actividades",
+      content: `¿Está seguro de ${plan ? "actualizar" : "registrar"} el plan?`,
       okText: "Sí",
       cancelText: "No",
       onOk: handleRegisterPlan,
@@ -59,10 +77,9 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
       }
 
       setIsLoading(true);
-      const plan: IPlanActividades = { ...planData, actividades: activities };
-      //console.log("Plan registrado exitosamente:", plan);
+      const planToSubmit: IPlanActividades = { ...planData, actividades: activities };
 
-      await onRegister(plan);
+      await onRegister(planToSubmit);
 
       // Resetea los formularios y estados
       setPlanData({ nombre_proyecto: "", objetivo_proyecto: "", total_horas: 0 });
@@ -103,7 +120,7 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
 
   return (
     <Modal
-      title="Registrar Plan de Actividades"
+      title={plan ? "Actualizar Plan de Actividades" : "Registrar Plan de Actividades"}
       open={isModalOpen}
       onCancel={handleCancel}
       footer={
@@ -122,7 +139,7 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
               onClick={handleConfirmRegisterPlan}
               disabled={isLoading}
             >
-              {isLoading ? <Spin /> : "Registrar Plan"}
+              {isLoading ? <Spin /> : plan ? "Actualizar Plan" : "Registrar Plan"}
             </Button>,
           ]
         ) : null
@@ -166,8 +183,18 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
       <h4>Actividades</h4>
       <List
         dataSource={activities}
-        renderItem={(activity) => (
-          <List.Item>
+        renderItem={(activity, index) => (
+          <List.Item
+            actions={[
+              <Button
+                danger
+                type="text"
+                onClick={() => setActivities(activities.filter((_, i) => i !== index))}
+              >
+                Eliminar
+              </Button>,
+            ]}
+          >
             <strong>{activity.descripcion}</strong> - {activity.horas_dedicadas} horas
           </List.Item>
         )}

@@ -22,18 +22,16 @@ export async function createPlanActividad(plan: IPlanActividades): Promise<strin
 export async function getAllPlanActividades(): Promise<IPlanActividades[]> {
   try {
     const querySnapshot = await getDocs(collection(db, collectionName));
-    const planes: IPlanActividades[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as IPlanActividades;
-      planes.push(data);
-    });
-    return planes;
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as unknown as IPlanActividades[];
   } catch (error) {
     console.error('Error obteniendo los planes de actividades:', error);
     throw error;
   }
 }
-
+ 
 
 export async function getPlanActividadById(id: string): Promise<IPlanActividades | null> {
   try {

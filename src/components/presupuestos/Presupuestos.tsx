@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getPresupuestos, addPresupuesto } from "../../shared/services/presupuesto.service";
+import { getPresupuestos, addPresupuesto, updatePresupuesto } from "../../shared/services/presupuesto.service";
 import { IPresupuestos } from "../../shared/models/models";
 import { Spin, message, Input, Collapse, Button } from "antd";
 import { LoadingOutlined, CloseOutlined } from "@ant-design/icons";
@@ -13,6 +13,7 @@ export const Presupuestos: React.FC = () => {
   const [filteredPresupuestos, setFilteredPresupuestos] = useState<IPresupuestos[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedPresupuesto, setSelectedPresupuesto] = useState<IPresupuestos | null>(null);
 
   const getData = async () => {
     try {
@@ -30,9 +31,15 @@ export const Presupuestos: React.FC = () => {
 
   const handleRegisterPresupuesto = async (presupuesto: IPresupuestos) => {
     try {
-      await addPresupuesto(presupuesto);
-      message.success("Presupuesto registrado exitosamente.");
+      if (selectedPresupuesto) {
+        await updatePresupuesto(selectedPresupuesto.id, presupuesto);
+        message.success("Presupuesto actualizado exitosamente.");
+      } else {
+        await addPresupuesto(presupuesto);
+        message.success("Presupuesto registrado exitosamente.");
+      }
       setIsModalOpen(false);
+      setSelectedPresupuesto(null);
       getData();
     } catch (error) {
       console.error("Error registrando el presupuesto:", error);
@@ -116,6 +123,16 @@ export const Presupuestos: React.FC = () => {
                       </li>
                     ))}
                   </ul>
+                  <Button
+                    style={{ backgroundColor: "#0068b1", color: "white", borderColor: "#0068b1" }}
+                    type="primary"
+                    onClick={() => {
+                      setSelectedPresupuesto(presupuesto);
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    Actualizar
+                  </Button>
                 </Panel>
               ))}
             </Collapse>
@@ -129,8 +146,12 @@ export const Presupuestos: React.FC = () => {
       </button>
       <RegistrarPresupuesto
         isModalOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedPresupuesto(null);
+        }}
         onSubmit={handleRegisterPresupuesto}
+        presupuesto={selectedPresupuesto}
       />
     </div>
   );

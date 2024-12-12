@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getAllPlanActividades, createPlanActividad } from "../../shared/services/planes.service";
+import { getAllPlanActividades, createPlanActividad, updatePlanActividad } from "../../shared/services/planes.service";
 import { IPlanActividades } from "../../shared/models/models";
 import { Spin, message, Input, Collapse, Button } from "antd";
 import { LoadingOutlined, CloseOutlined } from "@ant-design/icons";
@@ -13,6 +13,7 @@ export const Planes: React.FC = () => {
   const [filteredPlanes, setFilteredPlanes] = useState<IPlanActividades[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedPlan, setSelectedPlan] = useState<IPlanActividades | null>(null);
 
   const getData = async () => {
     try {
@@ -30,9 +31,15 @@ export const Planes: React.FC = () => {
 
   const handleRegisterPlan = async (plan: IPlanActividades) => {
     try {
-      await createPlanActividad(plan);
-      message.success("Plan registrado exitosamente.");
+      if (selectedPlan) {
+        await updatePlanActividad(selectedPlan.id, plan);
+        message.success("Plan actualizado exitosamente.");
+      } else {
+        await createPlanActividad(plan);
+        message.success("Plan registrado exitosamente.");
+      }
       setIsModalOpen(false);
+      setSelectedPlan(null);
       getData();
     } catch (error) {
       console.error("Error registrando el plan:", error);
@@ -94,7 +101,7 @@ export const Planes: React.FC = () => {
                 <Panel header={plan.nombre_proyecto} key={index}>
                   <p>
                     <strong>Objetivo:</strong> {plan.objetivo_proyecto}
-                  </p>a
+                  </p>
                   <p>
                     <strong>Total de Horas:</strong> {plan.total_horas}
                   </p>
@@ -109,6 +116,15 @@ export const Planes: React.FC = () => {
                       </li>
                     ))}
                   </ul>
+                  <Button
+                    type="primary"
+                    onClick={() => {
+                      setSelectedPlan(plan);
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    Actualizar
+                  </Button>
                 </Panel>
               ))}
             </Collapse>
@@ -122,8 +138,12 @@ export const Planes: React.FC = () => {
       </button>
       <RegistrarPlan
         isModalOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedPlan(null);
+        }}
         onRegister={handleRegisterPlan}
+        plan={selectedPlan}
       />
     </div>
   );

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Modal, Form, Input, Button, List, InputNumber, message } from "antd";
 import { IPresupuestos, IRecurso } from "../../shared/models/models";
 
@@ -6,14 +7,24 @@ interface Props {
   isModalOpen: boolean;
   onClose: () => void;
   onSubmit: (presupuesto: IPresupuestos) => void;
+  presupuesto?: IPresupuestos | null;
 }
 
-const RegistrarPresupuesto: React.FC<Props> = ({ isModalOpen, onClose, onSubmit }) => {
+const RegistrarPresupuesto: React.FC<Props> = ({ isModalOpen, onClose, onSubmit, presupuesto }) => {
   const [nombreProyecto, setNombreProyecto] = useState<string>("");
   const [recursos, setRecursos] = useState<IRecurso[]>([]);
   const [subTotalFuturo, setSubTotalFuturo] = useState<number>(0);
   const [subTotalContribuciones, setSubTotalContribuciones] = useState<number>(0);
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    if (presupuesto) {
+      setNombreProyecto(presupuesto.nombre_proyecto);
+      setRecursos(presupuesto.recursos);
+      setSubTotalFuturo(presupuesto.sub_total_creando_mi_futuro);
+      setSubTotalContribuciones(presupuesto.sub_total_contribuciones);
+    }
+  }, [presupuesto]);
 
   const handleAddRecurso = (values: Omit<IRecurso, "id">) => {
     const nuevoRecurso = {
@@ -33,15 +44,17 @@ const RegistrarPresupuesto: React.FC<Props> = ({ isModalOpen, onClose, onSubmit 
     setSubTotalContribuciones((prev) => prev - recurso.constribucion_otros);
     setRecursos((prev) => prev.filter((_, i) => i !== index));
   };
+
   const handleConfirmRegisterPlan = () => {
     Modal.confirm({
-      title: "¿Está seguro de registrar el presupuesto?",
-      content: "Una vez registrado, no podrá modificarlo.",
+      title: "Registrar Presupuesto",
+      content: "¿Está seguro de registrar el presupuesto?",
       okText: "Sí",
       cancelText: "No",
       onOk: handleSubmit,
     });
   };
+
   const handleSubmit = () => {
     if (!nombreProyecto) {
       message.error("Debe ingresar el nombre del proyecto.");
@@ -84,7 +97,7 @@ const RegistrarPresupuesto: React.FC<Props> = ({ isModalOpen, onClose, onSubmit 
           Cancelar
         </Button>,
         <Button style={{ backgroundColor: "#0068b1", color: "white", borderColor: "#0068b1" }} onClick={handleConfirmRegisterPlan}>
-          Registrar Presupuesto
+        {presupuesto ? "Actualizar Presupuesto" : "Registrar Presupuesto"}
         </Button>,
       ]}
     >
