@@ -66,7 +66,8 @@ const RegistrarPresupuesto: React.FC<Props> = ({ isModalOpen, onClose, onSubmit,
       return;
     }
 
-    const presupuesto: IPresupuestos = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const presupuesto: any = {
       nombre_proyecto: nombreProyecto,
       recursos,
       sub_total_creando_mi_futuro: subTotalFuturo,

@@ -15,7 +15,7 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
   onRegister,
   plan,
 }) => {
-  const [planData, setPlanData] = useState<Omit<IPlanActividades, "actividades">>({
+  const [planData, setPlanData] = useState<Omit<IPlanActividades, "actividades" | "id">>({
     nombre_proyecto: "",
     objetivo_proyecto: "",
     total_horas: 0,
@@ -77,7 +77,10 @@ export const RegistrarPlan: React.FC<RegistrarPlanProps> = ({
       }
 
       setIsLoading(true);
-      const planToSubmit: IPlanActividades = { ...planData, actividades: activities };
+      const planToSubmit: IPlanActividades = {
+        ...planData, actividades: activities,
+        id: ""
+      };
 
       await onRegister(planToSubmit);
 

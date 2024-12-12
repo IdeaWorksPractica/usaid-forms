@@ -6,6 +6,7 @@ export interface IActividad {
   responsables_actividad: string[];
 }
 export interface IPlanActividades {
+  id:string;
   nombre_proyecto: string;
   objetivo_proyecto: string;
   actividades: IActividad[];
@@ -61,6 +62,7 @@ export interface IFotografias {
 }
 
 export interface IPresupuestos {
+  id :string
   nombre_proyecto: string;
   recursos: IRecurso[];
   sub_total_creando_mi_futuro: number;
