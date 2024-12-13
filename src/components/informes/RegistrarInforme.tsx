@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal, Form, Input, Button, Checkbox, message, Upload, List, Spin } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { IInforme, IParticipante } from "../../shared/models/models";
+import { createInforme, updateInforme } from "../../shared/services/informes.service";
 
 const tiposProyectoOptions = [
   "Educación",
@@ -16,14 +17,7 @@ const tiposProyectoOptions = [
 interface RegistrarInformeProps {
   isModalOpen: boolean;
   onClose: () => void;
-  onRegister: (
-    data: Omit<IInforme, "id">,
-    images?: {
-      antes?: File[];
-      durante?: File[];
-      despues?: File[];
-    }
-  ) => Promise<void>;
+  onRegister: () => Promise<void>;
   onUpdate: (
     data: IInforme,
     images?: {
@@ -144,7 +138,8 @@ export const RegistrarInforme: React.FC<RegistrarInformeProps> = ({
 
   const handleConfirmSubmit = () => {
     if (informe) {
-      handleUpdate();
+     handleUpdate();
+      
     } else {
       handleRegister();
     }
@@ -155,19 +150,25 @@ export const RegistrarInforme: React.FC<RegistrarInformeProps> = ({
       await informeForm.validateFields();
       setIsLoading(true);
   
-      // Preparar la estructura de fotografias
-      const fotografias = {
-        antes: images.antes.map(() => ""),
-        durantes: images.durante.map(() => ""),
-        despues: images.despues.map(() => ""),
+      type Fotografias = {
+        antes: (string | File)[];
+        durante: (string | File)[];
+        despues: (string | File)[];
       };
   
-      // Crear el informe con fotografias
-      await onRegister(
-        { ...informeData, tipo_proyecto: tipoProyecto, participantes, fotografias },
-        images
-      );
+      // Procesar `images` dinámicamente
+      const fotografias: Fotografias = {
+        antes: (images.antes || []).map((image) => (typeof image === "string" ? image : image)),
+        durante: (images.durante || []).map((image) => (typeof image === "string" ? image : image)),
+        despues: (images.despues || []).map((image) => (typeof image === "string" ? image : image)),
+      };
   
+      // Llama a la función sin incluir `fotografias` en `informeData`
+      await createInforme(
+        { ...informeData, tipo_proyecto: tipoProyecto, participantes },
+        fotografias // Las imágenes se pasan por separado
+      );
+      onRegister();
       resetForm();
       message.success("Informe registrado exitosamente.");
     } catch (error) {
@@ -176,6 +177,7 @@ export const RegistrarInforme: React.FC<RegistrarInformeProps> = ({
       setIsLoading(false);
     }
   };
+  
   
 
   const handleUpdate = async () => {
@@ -191,7 +193,7 @@ export const RegistrarInforme: React.FC<RegistrarInformeProps> = ({
       };
 
       // Actualizar el informe con las nuevas imágenes o datos
-      await onUpdate(
+      await updateInforme(
         { ...informe!, tipo_proyecto: tipoProyecto, participantes },
         updatedImages
       );

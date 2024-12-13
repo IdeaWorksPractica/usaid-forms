@@ -142,6 +142,7 @@ export const RegistrarPerfil: React.FC<RegistrarPerfilProps> = ({
           moment(date).format("YYYY-MM-DD")
         ),
       };
+      //console.log('Data a actualizar', updatedPerfil)
       await onUpdate(updatedPerfil);
       resetForm();
     } catch (error) {
