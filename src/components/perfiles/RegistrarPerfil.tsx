@@ -1,8 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Form, Input, Button, List, Checkbox, message, Spin, InputNumber, DatePicker } from "antd";
+import { Modal, Form, Input, Button, List, Checkbox, message, Spin, InputNumber, DatePicker, Select } from "antd";
 import { IPerfil, IParticipante } from "../../shared/models/models";
 import moment from "moment";
+const { Option } = Select;
 
+const departamentos = [
+  "Atlántida",
+  "Choluteca",
+  "Colón",
+  "Comayagua",
+  "Copán",
+  "Cortés",
+  "El Paraíso",
+  "Francisco Morazán",
+  "Gracias a Dios",
+  "Intibucá",
+  "Islas de la Bahía",
+  "La Paz",
+  "Lempira",
+  "Ocotepeque",
+  "Olancho",
+  "Santa Bárbara",
+  "Valle",
+  "Yoro",
+];
 interface RegistrarPerfilProps {
   isModalOpen: boolean;
   onClose: () => void;
@@ -10,6 +31,8 @@ interface RegistrarPerfilProps {
   onUpdate: (perfil: IPerfil) => Promise<void>;
   perfil?: IPerfil | null;
 }
+
+
 const tiposProyectoOptions = [
   "Educación",
   "Prevención de violencia",
@@ -268,15 +291,22 @@ export const RegistrarPerfil: React.FC<RegistrarPerfilProps> = ({
           />
         </Form.Item>
         <Form.Item
-          name="lugar_implementacion"
-          label="Lugar donde se implementará el Proyecto Social Comunitario"
-          rules={[{ required: true, message: "Ingrese el lugar de implementación." }]}
-        >
-          <Input
-            value={perfilData.lugar_implementacion}
-            onChange={(e) => setPerfilData({ ...perfilData, lugar_implementacion: e.target.value })}
-          />
-        </Form.Item>
+  name="lugar_implementacion"
+  label="Lugar donde se implementará el Proyecto Social Comunitario"
+  rules={[{ required: true, message: "Seleccione el lugar de implementación." }]}
+>
+  <Select
+    placeholder="Seleccione un departamento"
+    value={perfilData.lugar_implementacion}
+    onChange={(value) => setPerfilData({ ...perfilData, lugar_implementacion: value })}
+  >
+    {departamentos.map((departamento) => (
+      <Option key={departamento} value={departamento}>
+        {departamento}
+      </Option>
+    ))}
+  </Select>
+</Form.Item>
         <Form.Item
           name="cant_beneficiarios"
           label="Cantidad de Beneficiarios"

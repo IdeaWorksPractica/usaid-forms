@@ -4,11 +4,13 @@ import { IPerfil } from "../../shared/models/models";
 import { Spin, message, Input, Collapse, Button } from "antd";
 import { LoadingOutlined, CloseOutlined } from "@ant-design/icons";
 import { RegistrarPerfil } from "./RegistrarPerfil";
+import { generatePdfPerfil } from "./perfil.pdf.service";
 
 const { Panel } = Collapse;
 
 export const Perfiles: React.FC = () => {
   const [isLoading, setLoading] = useState<boolean>(true);
+  const [pdfLoading, setPdfLoading] = useState<boolean>(false);
   const [perfiles, setPerfiles] = useState<IPerfil[]>([]);
   const [filteredPerfiles, setFilteredPerfiles] = useState<IPerfil[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -70,6 +72,12 @@ export const Perfiles: React.FC = () => {
     setSelectedPerfil(perfil); // Selecciona el perfil a editar
     setIsModalOpen(true); // Abre el modal
   };
+  
+    const imprimirPDF = async  (perfil: IPerfil) => {
+    setPdfLoading(true);
+    await generatePdfPerfil(perfil);
+    setPdfLoading(false);
+    };
 
   useEffect(() => {
     getData();
@@ -174,6 +182,19 @@ export const Perfiles: React.FC = () => {
                     }}
                   >
                     Editar
+                  </Button>
+                  <Button
+                  onClick={() => imprimirPDF(perfil)}
+                    type="primary"
+                    style={{
+                      marginTop: "10px",
+                      marginLeft: "10px",
+                      backgroundColor: "#0068b1",
+                      color: "white",
+                      borderColor: "#0068b1",
+                    }}
+                  >
+                    {pdfLoading ? <Spin /> : "Imprimir PDF"}
                   </Button>
                 </Panel>
               ))}
