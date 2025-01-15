@@ -1,19 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { getPresupuestos, addPresupuesto, updatePresupuesto } from "../../shared/services/presupuesto.service";
+import {
+  getPresupuestos,
+  addPresupuesto,
+  updatePresupuesto,
+} from "../../shared/services/presupuesto.service";
 import { IPresupuestos } from "../../shared/models/models";
 import { Spin, message, Input, Collapse, Button } from "antd";
 import { LoadingOutlined, CloseOutlined } from "@ant-design/icons";
 import RegistrarPresupuesto from "./RegistrarPresupuesto";
+import { generatePdfPrespuesto } from "./presupuesto.pdf.service";
 
 const { Panel } = Collapse;
 
 export const Presupuestos: React.FC = () => {
   const [isLoading, setLoading] = useState<boolean>(true);
+  const [setPlanloading, setPlanLoading] = useState<boolean>(false);
   const [presupuestos, setPresupuestos] = useState<IPresupuestos[]>([]);
-  const [filteredPresupuestos, setFilteredPresupuestos] = useState<IPresupuestos[]>([]);
+  const [filteredPresupuestos, setFilteredPresupuestos] = useState<
+    IPresupuestos[]
+  >([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedPresupuesto, setSelectedPresupuesto] = useState<IPresupuestos | null>(null);
+  const [selectedPresupuesto, setSelectedPresupuesto] =
+    useState<IPresupuestos | null>(null);
 
   const getData = async () => {
     try {
@@ -62,6 +71,12 @@ export const Presupuestos: React.FC = () => {
     setFilteredPresupuestos(presupuestos); // Restaura la lista completa
   };
 
+  const imprimirPDF = async (presupuesto: IPresupuestos) => {
+    setPlanLoading(true);
+    await generatePdfPrespuesto(presupuesto);
+    setPlanLoading(false);
+  };
+
   useEffect(() => {
     getData();
   }, []);
@@ -104,10 +119,12 @@ export const Presupuestos: React.FC = () => {
               {filteredPresupuestos.map((presupuesto, index) => (
                 <Panel header={presupuesto.nombre_proyecto} key={index}>
                   <p>
-                    <strong>Sub Total Creando Mi Futuro:</strong> ${presupuesto.sub_total_creando_mi_futuro}
+                    <strong>Subtotal Creando Mi Futuro:</strong> $
+                    {presupuesto.sub_total_creando_mi_futuro}
                   </p>
                   <p>
-                    <strong>Sub Total Contribuciones:</strong> ${presupuesto.sub_total_contribuciones}
+                    <strong>Subtotal Contribuciones:</strong> $
+                    {presupuesto.sub_total_contribuciones}
                   </p>
                   <p>
                     <strong>Total:</strong> ${presupuesto.total}
@@ -118,13 +135,19 @@ export const Presupuestos: React.FC = () => {
                   <ul>
                     {presupuesto.recursos.map((recurso, i) => (
                       <li key={i}>
-                        {recurso.descripcion_recurso} - Cantidad: {recurso.cantidad}, Cubierto Creando Mi Futuro: $
-                        {recurso.cubierto_creando_mi_futuo}, Contribución Otros: ${recurso.constribucion_otros}
+                        {recurso.descripcion_recurso} - Cantidad:{" "}
+                        {recurso.cantidad}, Cubierto Creando Mi Futuro: $
+                        {recurso.cubierto_creando_mi_futuo}, Contribución Otros:
+                        ${recurso.constribucion_otros}
                       </li>
                     ))}
                   </ul>
                   <Button
-                    style={{ backgroundColor: "#0068b1", color: "white", borderColor: "#0068b1" }}
+                    style={{
+                      backgroundColor: "#0068b1",
+                      color: "white",
+                      borderColor: "#0068b1",
+                    }}
                     type="primary"
                     onClick={() => {
                       setSelectedPresupuesto(presupuesto);
@@ -132,6 +155,19 @@ export const Presupuestos: React.FC = () => {
                     }}
                   >
                     Actualizar
+                  </Button>
+                  <Button
+                    onClick={() => imprimirPDF(presupuesto)}
+                    type="primary"
+                    style={{
+                      marginTop: "10px",
+                      marginLeft: "10px",
+                      backgroundColor: "#0068b1",
+                      color: "white",
+                      borderColor: "#0068b1",
+                    }}
+                  >
+                    {setPlanloading ? <Spin /> : "Imprimir PDF"}
                   </Button>
                 </Panel>
               ))}

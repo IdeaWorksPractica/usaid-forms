@@ -1,25 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { getAllPlanActividades, createPlanActividad, updatePlanActividad } from "../../shared/services/planes.service";
+import {
+  getAllPlanActividades,
+  createPlanActividad,
+  updatePlanActividad,
+} from "../../shared/services/planes.service";
 import { IPlanActividades } from "../../shared/models/models";
 import { Spin, message, Input, Collapse, Button } from "antd";
 import { LoadingOutlined, CloseOutlined } from "@ant-design/icons";
 import { RegistrarPlan } from "./RegistrarPlan";
+import { generatePdfPlan } from "./planes.pdf.service";
 
 const { Panel } = Collapse;
 
 export const Planes: React.FC = () => {
   const [isLoading, setLoading] = useState<boolean>(true);
+  const [setPlanloading, setPlanLoading] = useState<boolean>(false);
   const [planes, setPlanes] = useState<IPlanActividades[]>([]);
   const [filteredPlanes, setFilteredPlanes] = useState<IPlanActividades[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedPlan, setSelectedPlan] = useState<IPlanActividades | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<IPlanActividades | null>(
+    null
+  );
 
   const getData = async () => {
     try {
       setLoading(true);
       const data = await getAllPlanActividades();
-      console.log('Planes: ', data)
+      console.log("Planes: ", data);
       setPlanes(data);
       setFilteredPlanes(data);
     } catch (error) {
@@ -50,7 +58,11 @@ export const Planes: React.FC = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase();
     setSearchTerm(value);
-    setFilteredPlanes(planes.filter((plan) => plan.nombre_proyecto.toLowerCase().includes(value)));
+    setFilteredPlanes(
+      planes.filter((plan) =>
+        plan.nombre_proyecto.toLowerCase().includes(value)
+      )
+    );
   };
 
   const clearSearch = () => {
@@ -58,6 +70,11 @@ export const Planes: React.FC = () => {
     setFilteredPlanes(planes); // Restaura la lista completa
   };
 
+  const imprimirPDF = async (plan: IPlanActividades) => {
+    setPlanLoading(true);
+    await generatePdfPlan(plan);
+    setPlanLoading(false);
+  };
   useEffect(() => {
     getData();
   }, []);
@@ -83,7 +100,7 @@ export const Planes: React.FC = () => {
             placeholder="Buscar por nombre de proyecto"
             value={searchTerm}
             onChange={handleSearch}
-            style={{ marginBottom: "20px", width: "100%", fontSize:'1rem' }}
+            style={{ marginBottom: "20px", width: "100%", fontSize: "1rem" }}
             suffix={
               searchTerm && (
                 <Button
@@ -111,8 +128,12 @@ export const Planes: React.FC = () => {
                   <ul>
                     {plan.actividades.map((actividad, i) => (
                       <li key={i}>
-                        {actividad.descripcion} - {actividad.horas_dedicadas} horas (
-                        {new Date(actividad.fecha_desarrollar).toLocaleDateString()})
+                        {actividad.descripcion} - {actividad.horas_dedicadas}{" "}
+                        horas (
+                        {new Date(
+                          actividad.fecha_desarrollar
+                        ).toLocaleDateString()}
+                        )
                       </li>
                     ))}
                   </ul>
@@ -124,6 +145,19 @@ export const Planes: React.FC = () => {
                     }}
                   >
                     Actualizar
+                  </Button>
+                  <Button
+                    onClick={() => imprimirPDF(plan)}
+                    type="primary"
+                    style={{
+                      marginTop: "10px",
+                      marginLeft: "10px",
+                      backgroundColor: "#0068b1",
+                      color: "white",
+                      borderColor: "#0068b1",
+                    }}
+                  >
+                    {setPlanloading ? <Spin /> : "Imprimir PDF"}
                   </Button>
                 </Panel>
               ))}

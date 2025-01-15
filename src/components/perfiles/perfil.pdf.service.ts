@@ -39,15 +39,16 @@ export const generatePdfPerfil = async (data: IPerfil) => {
     y += 5;
     doc.text(descripcionAcciones, 10, y);
 
-    y += descripcionAcciones.length * 5 + 10;
+    y += descripcionAcciones.length * 5;
+    
+    doc.text("Participantes:", 10, y+5);
     const participantes = Array.isArray(data.participantes)
         ? data.participantes.map((p) => [ p.nombre_completo, p.no_dni, p.no_telefono])
         : [];
-
     autoTable(doc, {
         head: [[ "Nombre Completo", "DNI", "Teléfono"]],
         body: participantes,
-        startY: y,
+        startY: y+10,
     });
 
     doc.save(`${data.nombre_proyecto || "perfil"}.pdf`);

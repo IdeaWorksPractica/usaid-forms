@@ -1,12 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { getAllPerfiles, createPerfil, updatePerfil } from "../../shared/services/perfiles.service";
 import { IPerfil } from "../../shared/models/models";
-import { Spin, message, Input, Collapse, Button } from "antd";
+import { Spin, message, Input, Collapse, Button, Select, Row, Col } from "antd";
 import { LoadingOutlined, CloseOutlined } from "@ant-design/icons";
 import { RegistrarPerfil } from "./RegistrarPerfil";
 import { generatePdfPerfil } from "./perfil.pdf.service";
+const departamentos = [
+  "Atlántida",
+  "Choluteca",
+  "Colón",
+  "Comayagua",
+  "Copán",
+  "Cortés",
+  "El Paraíso",
+  "Francisco Morazán",
+  "Gracias a Dios",
+  "Intibucá",
+  "Islas de la Bahía",
+  "La Paz",
+  "Lempira",
+  "Ocotepeque",
+  "Olancho",
+  "Santa Bárbara",
+  "Valle",
+  "Yoro",
+];
 
 const { Panel } = Collapse;
+const { Option } = Select;
 
 export const Perfiles: React.FC = () => {
   const [isLoading, setLoading] = useState<boolean>(true);
@@ -14,9 +35,9 @@ export const Perfiles: React.FC = () => {
   const [perfiles, setPerfiles] = useState<IPerfil[]>([]);
   const [filteredPerfiles, setFilteredPerfiles] = useState<IPerfil[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedDepartment, setSelectedDepartment] = useState<string | null>("Todos");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedPerfil, setSelectedPerfil] = useState<IPerfil | null>(null); // Estado para el perfil seleccionado
-
+  const [selectedPerfil, setSelectedPerfil] = useState<IPerfil | null>(null);
   const getData = async () => {
     try {
       setLoading(true);
@@ -58,13 +79,26 @@ export const Perfiles: React.FC = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase();
     setSearchTerm(value);
-    setFilteredPerfiles(
-      perfiles.filter((perfil) => perfil.nombre_proyecto.toLowerCase().includes(value))
+    applyFilters(value, selectedDepartment);
+  };
+
+  const handleDepartmentChange = (value: string | null) => {
+    setSelectedDepartment(value);
+    applyFilters(searchTerm, value);
+  };
+
+  const applyFilters = (search: string, department: string | null) => {
+    const filtered = perfiles.filter(
+      (perfil) =>
+        perfil.nombre_proyecto.toLowerCase().includes(search) &&
+        (department === "Todos" || !department || perfil.lugar_implementacion === department)
     );
+    setFilteredPerfiles(filtered);
   };
 
   const clearSearch = () => {
     setSearchTerm("");
+    setSelectedDepartment("Todos");
     setFilteredPerfiles(perfiles); // Restaura la lista completa
   };
 
@@ -72,12 +106,12 @@ export const Perfiles: React.FC = () => {
     setSelectedPerfil(perfil); // Selecciona el perfil a editar
     setIsModalOpen(true); // Abre el modal
   };
-  
-    const imprimirPDF = async  (perfil: IPerfil) => {
+
+  const imprimirPDF = async (perfil: IPerfil) => {
     setPdfLoading(true);
     await generatePdfPerfil(perfil);
     setPdfLoading(false);
-    };
+  };
 
   useEffect(() => {
     getData();
@@ -100,22 +134,43 @@ export const Perfiles: React.FC = () => {
         </div>
       ) : (
         <div>
-          <Input
-            placeholder="Buscar por nombre de proyecto"
-            value={searchTerm}
-            onChange={handleSearch}
-            style={{ marginBottom: "20px", width: "100%", fontSize: "1rem" }}
-            suffix={
-              searchTerm && (
-                <Button
-                  type="text"
-                  icon={<CloseOutlined />}
-                  onClick={clearSearch}
-                  style={{ color: "#000" }}
-                />
-              )
-            }
-          />
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12}>
+              <Input
+                placeholder="Buscar por nombre de proyecto"
+                value={searchTerm}
+                onChange={handleSearch}
+                style={{ marginBottom: "20px", width: "100%", fontSize: "1rem" }}
+                suffix={
+                  searchTerm && (
+                    <Button
+                      type="text"
+                      icon={<CloseOutlined />}
+                      onClick={clearSearch}
+                      style={{ color: "#000" }}
+                    />
+                  )
+                }
+              />
+            </Col>
+            <Col xs={24} sm={12}>
+              <Select
+                placeholder="Filtrar por departamento"
+                value={selectedDepartment}
+                onChange={handleDepartmentChange}
+                allowClear
+                style={{ width: "100%" }}
+              >
+                <Option value="Todos">Todos</Option>
+                {departamentos.map((departamento) => (
+                  <Option key={departamento} value={departamento}>
+                    {departamento}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+          </Row>
+
           {filteredPerfiles.length > 0 ? (
             <Collapse accordion>
               {filteredPerfiles.map((perfil, index) => (
@@ -184,7 +239,7 @@ export const Perfiles: React.FC = () => {
                     Editar
                   </Button>
                   <Button
-                  onClick={() => imprimirPDF(perfil)}
+                    onClick={() => imprimirPDF(perfil)}
                     type="primary"
                     style={{
                       marginTop: "10px",
