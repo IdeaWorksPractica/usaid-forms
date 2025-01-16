@@ -4,11 +4,13 @@ import { IInforme } from "../../shared/models/models";
 import { Spin, Input, Collapse, Button, Modal } from "antd";
 import { LoadingOutlined, CloseOutlined } from "@ant-design/icons";
 import { RegistrarInforme } from "./RegistrarInforme";
+import { generatePdfInforme } from "./informes.pdf.servicio";
 
 const { Panel } = Collapse;
 
 export const Informes: React.FC = () => {
   const [isLoading, setLoading] = useState<boolean>(true);
+  const [pdfLoading, setPdfLoading] = useState<boolean>(false);
   const [informes, setInformes] = useState<IInforme[]>([]);
   const [filteredInformes, setFilteredInformes] = useState<IInforme[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -20,7 +22,7 @@ export const Informes: React.FC = () => {
     try {
       setLoading(true);
       const data = await getAllInformes();
-      console.log(data)
+      console.log(data);
       setInformes(data);
       setFilteredInformes(data);
     } catch (error) {
@@ -43,6 +45,12 @@ export const Informes: React.FC = () => {
   const clearSearch = () => {
     setSearchTerm("");
     setFilteredInformes(informes);
+  };
+
+  const imprimirPDF = async (informe: IInforme) => {
+    setPdfLoading(true);
+    await generatePdfInforme(informe);
+    setPdfLoading(false);
   };
 
   useEffect(() => {
@@ -68,7 +76,7 @@ export const Informes: React.FC = () => {
   };
 
   const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-
+  const customSpinner = <LoadingOutlined style={{ fontSize: 18, color: "white" }} spin />;
   return (
     <div>
       {isLoading ? (
@@ -105,21 +113,28 @@ export const Informes: React.FC = () => {
               {filteredInformes.map((informe) => (
                 <Panel header={`${informe.nombre_proyecto}`} key={informe.id}>
                   <p>
-                    <strong>Nombre del Proyecto:</strong> {informe.nombre_proyecto}
+                    <strong>Nombre del Proyecto:</strong>{" "}
+                    {informe.nombre_proyecto}
                   </p>
                   <p>
-                    <strong>Tipo de Proyecto:</strong> {informe.tipo_proyecto.join(", ")}
+                    <strong>Tipo de Proyecto:</strong>{" "}
+                    {informe.tipo_proyecto.join(", ")}
                   </p>
                   <p>
-                    <strong>Líder/Coordinador:</strong> {informe.lider_coordinador}
+                    <strong>Líder/Coordinador:</strong>{" "}
+                    {informe.lider_coordinador}
                   </p>
                   <p>
                     <strong>Beneficiarios:</strong>{" "}
                     {informe.descripcion_beneficiarios.cant_beneficiarios} -{" "}
-                    {informe.descripcion_beneficiarios.descripcion_beneficiarios}
+                    {
+                      informe.descripcion_beneficiarios
+                        .descripcion_beneficiarios
+                    }
                   </p>
                   <p>
-                    <strong>Mejora Descripción:</strong> {informe.descripcion_mejora}
+                    <strong>Mejora Descripción:</strong>{" "}
+                    {informe.descripcion_mejora}
                   </p>
                   <p>
                     <strong>Riesgos Medioambientales:</strong>{" "}
@@ -138,7 +153,11 @@ export const Informes: React.FC = () => {
                             key={i}
                             src={url}
                             alt={`Antes ${i + 1}`}
-                            style={{ cursor: "pointer", width: "45%", margin: "5px" }}
+                            style={{
+                              cursor: "pointer",
+                              width: "45%",
+                              margin: "5px",
+                            }}
                             onClick={() => handleImageClick(url)}
                           />
                         ))}
@@ -152,7 +171,11 @@ export const Informes: React.FC = () => {
                             key={i}
                             src={url}
                             alt={`Durante ${i + 1}`}
-                            style={{ cursor: "pointer", width: "45%", margin: "5px" }}
+                            style={{
+                              cursor: "pointer",
+                              width: "45%",
+                              margin: "5px",
+                            }}
                             onClick={() => handleImageClick(url)}
                           />
                         ))}
@@ -166,7 +189,11 @@ export const Informes: React.FC = () => {
                             key={i}
                             src={url}
                             alt={`Después ${i + 1}`}
-                            style={{ cursor: "pointer", width: "45%", margin: "5px" }}
+                            style={{
+                              cursor: "pointer",
+                              width: "45%",
+                              margin: "5px",
+                            }}
                             onClick={() => handleImageClick(url)}
                           />
                         ))}
@@ -179,8 +206,8 @@ export const Informes: React.FC = () => {
                   <ul>
                     {informe.participantes.map((participante, i) => (
                       <li key={i}>
-                        {participante.nombre_completo} (DNI: {participante.no_dni}, Tel:{" "}
-                        {participante.no_telefono})
+                        {participante.nombre_completo} (DNI:{" "}
+                        {participante.no_dni}, Tel: {participante.no_telefono})
                       </li>
                     ))}
                   </ul>
@@ -190,6 +217,19 @@ export const Informes: React.FC = () => {
                     style={{ marginTop: "10px" }}
                   >
                     Actualizar
+                  </Button>
+                  <Button
+                    onClick={() => imprimirPDF(informe)}
+                    type="primary"
+                    style={{
+                      marginTop: "10px",
+                      marginLeft: "10px",
+                      backgroundColor: "#0068b1",
+                      color: "white",
+                      borderColor: "#0068b1",
+                    }}
+                  >
+                    {pdfLoading ?  <Spin indicator={customSpinner} /> : "Imprimir PDF"}
                   </Button>
                 </Panel>
               ))}
