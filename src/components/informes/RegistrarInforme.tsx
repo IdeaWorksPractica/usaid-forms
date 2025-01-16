@@ -33,7 +33,6 @@ export const RegistrarInforme: React.FC<RegistrarInformeProps> = ({
   isModalOpen,
   onClose,
   onRegister,
-  onUpdate,
   informe,
 }) => {
   const [informeData, setInformeData] = useState<Omit<IInforme, "id" | "participantes" | "fotografias" | "tipo_proyecto">>({
@@ -150,17 +149,11 @@ export const RegistrarInforme: React.FC<RegistrarInformeProps> = ({
       await informeForm.validateFields();
       setIsLoading(true);
   
-      type Fotografias = {
-        antes: (string | File)[];
-        durante: (string | File)[];
-        despues: (string | File)[];
-      };
-  
       // Procesar `images` dinámicamente
-      const fotografias: Fotografias = {
-        antes: (images.antes || []).map((image) => (typeof image === "string" ? image : image)),
-        durante: (images.durante || []).map((image) => (typeof image === "string" ? image : image)),
-        despues: (images.despues || []).map((image) => (typeof image === "string" ? image : image)),
+      const fotografias = {
+        antes: images.antes || [],
+        durante: images.durante || [],
+        despues: images.despues || [],
       };
   
       // Llama a la función sin incluir `fotografias` en `informeData`
@@ -193,10 +186,13 @@ export const RegistrarInforme: React.FC<RegistrarInformeProps> = ({
       };
 
       // Actualizar el informe con las nuevas imágenes o datos
-      await updateInforme(
-        { ...informe!, tipo_proyecto: tipoProyecto, participantes },
-        updatedImages
-      );
+      if (informe) {
+        await updateInforme(
+          informe.id,
+          { ...informe, tipo_proyecto: tipoProyecto, participantes },
+          updatedImages
+        );
+      }
 
       resetForm();
       message.success("Informe actualizado exitosamente.");
